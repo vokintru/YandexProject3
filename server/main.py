@@ -61,6 +61,7 @@ def reqister():
     return render_template('register1.html', title='Регистрация', form=form)
 
 
+# TODO: Сделать систему после заполнения данных профиля после регистрации аккаунта (https://github.com/vokintru/YandexProject3/issues/7)
 @app.route('/register_complement', methods=['GET', 'POST'])
 @login_required
 def register_complement():
