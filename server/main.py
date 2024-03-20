@@ -95,8 +95,8 @@ def profile(username):
     params['name'] = account.name
     params['avatar'] = account.avatar
     params['bio'] = account.bio
-    params['folowers'] = account.followers
-    params['folow'] = account.follow
+    params['folowers'] = len(account.followers)
+    params['folow'] = len(account.follow)
     return render_template('profile.html', **params)
 
 
