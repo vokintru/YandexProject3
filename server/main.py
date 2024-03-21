@@ -119,6 +119,20 @@ def logout():
     return redirect("/")
 
 
+@app.route('/users/@<username>')
+def profile(username):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.username == username).first()
+    account = db_sess.query(Account).filter(Account.id == user.id).first()
+    params = {}
+    params['name'] = account.name
+    params['avatar'] = account.avatar
+    params['bio'] = account.bio
+    params['folowers'] = len(account.followers)
+    params['folow'] = len(account.follow)
+    return render_template('profile.html', **params)
+
+
 def main():
     db_session.global_init("db/users.db")
     app.run()
