@@ -15,7 +15,7 @@
 <body>
 <header>
     <nav class="navbar" style="background-color: #79b253;">
-        <a href="/"><img src="static/img/logo.png" height=56px width=64px></a>
+        <a href="/"><img src="/static/img/logo.png" height=56px width=64px></a>
         {% if current_user.is_authenticated %}
             <a class="navbar-brand btn btn-danger" href="/logout">Logout (@{{ current_user.username }})</a>
         {% else %}
