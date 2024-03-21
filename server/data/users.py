@@ -1,5 +1,4 @@
 import datetime
-import random
 
 import sqlalchemy
 from flask_login import UserMixin
@@ -32,27 +31,15 @@ class User(SqlAlchemyBase, UserMixin):
 class Account(SqlAlchemyBase, UserMixin):
     __tablename__ = 'accounts'
 
-    default_avatars = [
-        "static/img/default_avatars/avatar0.png",
-        "static/img/default_avatars/avatar1.png",
-        "static/img/default_avatars/avatar2.png",
-        "static/img/default_avatars/avatar3.png",
-        "static/img/default_avatars/avatar4.png",
-        "static/img/default_avatars/avatar5.png",
-        "static/img/default_avatars/avatar6.png",
-        "static/img/default_avatars/avatar7.png",
-        "static/img/default_avatars/avatar8.png",
-        "static/img/default_avatars/avatar9.png",
-    ]
-
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     bio = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    avatar = sqlalchemy.Column(sqlalchemy.String, nullable=False, default=random.choice(default_avatars))
-    followers = sqlalchemy.Column(JSON, nullable=True, default=[])
-    follow = sqlalchemy.Column(JSON, nullable=True, default=[])
+    avatar = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    followers = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    follow = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    posts = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<User> {self.id} {self.username} {self.name} {self.avatar} {self.followers} {self.follow}'
+        return f'<Account> {self.id} {self.username} {self.name} {self.avatar} {self.followers} {self.follow}'
 
