@@ -61,24 +61,6 @@ def reqister():
     return render_template('register1.html', title='Регистрация', form=form)
 
 
-# TODO: Сделать систему после заполнения данных профиля после регистрации аккаунта (https://github.com/vokintru/YandexProject3/issues/7)
-@app.route('/register_complement', methods=['GET', 'POST'])
-@login_required
-def register_complement():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        user = User(
-            username=form.username.data,
-            hashed_password=form.password.data
-        )
-        user.set_password(form.password.data)
-        db_sess.add(user)
-        db_sess.commit()
-        return redirect('/')
-    return render_template('register2.html', title='Регистрация', form=form)
-
-
 @app.route('/logout')
 @login_required
 def logout():
