@@ -22,15 +22,17 @@ def load_user(user_id):
 
 @app.route("/")
 def index():
-    db_sess = db_session.create_session()
-    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
-    follow = account.follow
-    posts_all = db_sess.query(Post).all()
-    posts = []
-    for post in posts_all:
-        if post.author in follow or post.author == current_user.id:
-            posts.append(post)
-    posts = list(reversed(posts))
+    if current_user.is_authenticated:
+        account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+        follow = account.follow
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author in follow or post.author == current_user.id:
+                posts.append(post)
+        posts = list(reversed(posts))
+    else:
+        posts = db_sess.query(Post).all()
 
     return render_template('index.html', posts=posts)
 
