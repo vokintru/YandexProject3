@@ -1,1 +1,2 @@
 username = "testuser" hashed_password = "hardpassword"
+username = "testuser2" hashed_password = "hardpassword2"

@@ -1,31 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .rounded-image {
+        max-width: 300px; /* Максимальная ширина изображения */
+        height: 300px; /* Автоматический расчет высоты для поддержки пропорций */
+        border-radius: 50%; /* Создание круглого изображения */
+    }
+</style>
 <h1>Профиль</h1>
-<div class="container text-center">
-  <div class="row">
-    <div class="col">
-      <img style="width: 326px; height: 304px" src="../{{avatar}}" class="rounded float-start" alt="фото профиля">
-    </div>
-    <div class="col">
-        <div class="row">
-          <div class="col">
-            <div class="h5 pb-2 mb-4 text-info border-bottom border-info">
-              <p><strong>Подписчики: {{folowers}}</strong></p>
-            </div>
-          </div>
-          <div class="col">
-            <div class="h5 pb-2 mb-4 text-info border-bottom border-info">
-              <p><strong>Подписки: {{folow}}</strong></p>
-            </div>
-          </div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <img src="../{{avatar}}" alt="фото профиля" class="rounded-image">
         </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <div class="h5 pb-2 mb-4 text-info border-bottom border-info">
+                        <p><strong>Подписчики: {{folowers}}</strong></p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="h5 pb-2 mb-4 text-info border-bottom border-info">
+                        <p><strong>Подписки: {{folow}}</strong></p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-          <h3>{{name}}</h3>
-          <p>{{bio}}</p>
+            <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+                <h3>{{name}}</h3>
+                <p>{{bio}}</p>
+            </div>
         </div>
     </div>
-  </div>
 </div>
 {% endblock %}
