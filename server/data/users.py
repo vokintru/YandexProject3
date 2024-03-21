@@ -50,8 +50,8 @@ class Account(SqlAlchemyBase, UserMixin):
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     bio = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=False, default=random.choice(default_avatars))
-    followers = sqlalchemy.Column(JSON, nullable=True, default=[])
-    follow = sqlalchemy.Column(JSON, nullable=True, default=[])
+    followers = sqlalchemy.Column(sqlalchemy.JSON, nullable=True, default=[])
+    follow = sqlalchemy.Column(sqlalchemy.JSON, nullable=True, default=[])
 
     def __repr__(self):
         return f'<User> {self.id} {self.username} {self.name} {self.avatar} {self.followers} {self.follow}'
