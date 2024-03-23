@@ -87,23 +87,11 @@ def reqister():
             hashed_password=form.password.data
         )
 
-        default_avatars = [
-            "static/img/default_avatars/avatar0.png",
-            "static/img/default_avatars/avatar1.png",
-            "static/img/default_avatars/avatar2.png",
-            "static/img/default_avatars/avatar3.png",
-            "static/img/default_avatars/avatar4.png",
-            "static/img/default_avatars/avatar5.png",
-            "static/img/default_avatars/avatar6.png",
-            "static/img/default_avatars/avatar7.png",
-            "static/img/default_avatars/avatar8.png",
-            "static/img/default_avatars/avatar9.png",
-        ]
         account = Account(
             name=form.username.data,
             bio=f"Мы почти ничего не знаем о {form.username.data}, но мы уверены, что {form.username.data} — "
                 f"отличный человек.",
-            avatar=random.choice(default_avatars),
+            avatar=f'static/img/default_avatars/{random.randint(0, 49)}.png',
             followers=[],
             follow=[]
         )
