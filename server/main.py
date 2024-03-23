@@ -11,7 +11,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU0'
+app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
 
 
 @login_manager.user_loader
@@ -22,6 +22,7 @@ def load_user(user_id):
 
 @app.route("/")
 def index():
+    db_sess = db_session.create_session()
     if current_user.is_authenticated:
         account = db_sess.query(Account).filter(Account.id == current_user.id).first()
         follow = account.follow
