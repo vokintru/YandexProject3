@@ -137,6 +137,7 @@ def profile(username):
     params['bio'] = account.bio
     params['folowers'] = len(account.followers)
     params['folow'] = len(account.follow)
+    params['is_follow'] = int(current_user.id) in account.followers
     return render_template('profile.html', **params)
 
 
@@ -171,6 +172,21 @@ def edit_profile():
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     return render_template('edit_profile.html', title='Редактировать', form=form)
+
+
+@app.route('/unfollow/<username>/<accid>')
+def unfollow(username, accid):
+    db_sess = db_session.create_session()
+    acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    acc2 = db_sess.query(Account).filter(Account.id == accid).first()
+    f1 = list(acc1.follow)
+    f1.remove(int(accid))
+    acc1.follow = list(set(f1))
+    f2 = list(acc2.followers)
+    f2.remove(int(current_user.id))
+    acc2.followers = list(set(f2))
+    db_sess.commit()
+    return redirect(f'/users/@{username}')
 
 
 def main():
