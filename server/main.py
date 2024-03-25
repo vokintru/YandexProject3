@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, session, url_for
 from data import db_session
 from data.users import User, Account
 from data.posts import Post
@@ -33,9 +33,34 @@ def index():
                 posts.append(post)
         posts = list(reversed(posts))
     else:
-        posts = db_sess.query(Post).all()
+        return redirect('/post_all')
 
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts, were='ind')
+
+
+@app.route("/home")
+def home():
+    return redirect('/')
+
+
+@app.route("/post_all")
+@app.route("/#")
+def post_all():
+    db_sess = db_session.create_session()
+    posts = db_sess.query(Post).all()
+    return render_template('index.html', posts=posts, were='pos')
+
+
+@app.route('/ne_newpost')
+def ne_newpost():
+    session['url'] = url_for('home')
+    return redirect('/newpost')
+
+
+@app.route('/all_newpost')
+def all_newpost():
+    session['url'] = url_for('post_all')
+    return redirect('/newpost')
 
 
 @app.route("/newpost", methods=['GET', 'POST'])
@@ -50,6 +75,8 @@ def newpost():
         )
         db_sess.add(post)
         db_sess.commit()
+        if 'url' in session:
+            return redirect(session['url'])
         return redirect('/')
     return render_template('newpost.html', form=form)
 
@@ -66,7 +93,7 @@ def login():
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+    return render_template('login.html', title='Авторизация', message='ㅤ', form=form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -99,8 +126,13 @@ def reqister():
         db_sess.add(user)
         db_sess.add(account)
         db_sess.commit()
-        return redirect('/')
-    return render_template('register.html', title='Регистрация', form=form)
+        form = LoginForm()
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+        return redirect('/post_all')
+    return render_template('register.html', title='Регистрация', form=form, message='ㅤ')
 
 
 @app.route('/logout')
@@ -119,8 +151,12 @@ def profile(username):
     params['name'] = account.name
     params['avatar'] = account.avatar
     params['bio'] = account.bio
-    params['folowers'] = len(account.followers)
-    params['folow'] = len(account.follow)
+    if username == 'hot_220':
+        params['folowers'] = -7
+        params['folow'] = -12
+    else:
+        params['folowers'] = len(account.followers)
+        params['folow'] = len(account.follow)
     return render_template('profile.html', **params)
 
 

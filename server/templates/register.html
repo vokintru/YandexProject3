@@ -7,7 +7,7 @@
 
     <p>
         {{ form.username.label }}<br>
-        {{ form.username(class="form-control") }}<br>
+        {{ form.username(class="form-control", type="username") }}<br>
         {% for error in form.username.errors %}
             <p class="alert alert-danger" role="alert">
                 {{ error }}
@@ -31,8 +31,8 @@
                 {{ error }}
             </p>
         {% endfor %}
+    <font color="Red">{{message}}</font>
     </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
-    {{message}}
 </form>
 {% endblock %}
