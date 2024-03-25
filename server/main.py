@@ -22,6 +22,22 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
+def get_avatar_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(Account).filter(Account.id == user_id).first()
+    if user:
+        return user.avatar
+    return None
+
+
+def get_username_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(Account).filter(Account.id == user_id).first()
+    if user:
+        return user.avatar
+    return None
+
+
 @app.route("/")
 def index():
     db_sess = db_session.create_session()

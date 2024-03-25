@@ -3,26 +3,23 @@
 {% block content %}
 <h1>Лента</h1>
 {% if current_user.is_authenticated %}
-    <a href="/newpost" class="btn btn-secondary">Квакнуть</a>
+    <a href="/newpost" class="btn btn-secondary">Создать квакание</a>
 {% endif %}
-<br><br><br>
-{% for item in posts%}
-<div class="col-md6 border rounded">
-    <table class="table">
-  <thead>
-    <tr>
-      <th scope="col"><a href="/users/@{{item.authorname}}">@{{item.authorname}}</a></th>
-      <th>{{item.time}}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{{item.text}}</td>
-    </tr>
-
-  </tbody>
-</table>
-</div>
 <br><br>
-{% endfor %}
+    <ul>
+        {% for post in posts %}
+            <div class="post border rounded p-3 mb-3">
+                <div class="media">
+                    <img src="аватарка.jpg" class="mr-3" alt="Аватар" style="width:64px;height:64px;">
+                    <div class="media-body">
+                        <h5 class="mt-0">@{{post.author}}</h5>
+                        <hr>
+                        <p>Сам пост или текст с прикрепленным фото/видео</p>
+                        <p class="post-date">Дата поста</p>
+                    </div>
+                </div>
+            </div>
+            <br>
+        {% endfor %}
+    </ul>
 {% endblock %}
