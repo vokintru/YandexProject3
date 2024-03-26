@@ -11,6 +11,13 @@
     {% block title %}
     <title>{{title}}</title>
     {% endblock %}
+<style>
+body  {
+  background-image: url("/static/img/fon.png");
+  background-color: #cccccc;
+  background-size: 16%;
+   }
+</style>
 </head>
 <body>
 <header>
@@ -30,5 +37,6 @@
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>
+</div>
 </body>
 </html>
