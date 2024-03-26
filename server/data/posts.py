@@ -14,7 +14,6 @@ class Post(SqlAlchemyBase, UserMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     author = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
-    authorname = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     text = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     file = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     time = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
