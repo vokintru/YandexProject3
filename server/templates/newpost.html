@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-
 {% block content %}
     <h1>Создать квакание</h1>
-    <form action="" method="post">
+    <form action="" method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <p>
             {{ form.text.label }}<br>
@@ -13,7 +12,15 @@
                 </div>
             {% endfor %}
         </p>
-        <p>Загрузка файлов будет в будущем</p>
+        <p>
+            {{ form.file.label }}<br>
+            {{ form.file(class="form-control-file") }}<br>
+            {% for error in form.file.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
         <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
         <div>{{ message }}</div>
     </form>

@@ -15,6 +15,9 @@
                         <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                         <hr>
                         <p>{{post.text}}</p>
+                        {% if post.file_path %}
+                            <p><a href="{{post.file_path}}">Скачать файл</a></p>
+                        {% endif %}
                         <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
                     </div>
                 </div>
@@ -22,4 +25,27 @@
             <br>
         {% endfor %}
     </ul>
+    <form action="" method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.text.label }}<br>
+            {{ form.text(class="form-control", type="text") }}<br>
+            {% for error in form.text.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.file.label }}<br>
+            {{ form.file(class="form-control-file") }}<br>
+            {% for error in form.file.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+        <div>{{ message }}</div>
+    </form>
 {% endblock %}

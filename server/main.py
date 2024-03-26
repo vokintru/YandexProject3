@@ -1,5 +1,4 @@
 from pickle import loads, dumps
-
 from flask import Flask, render_template, redirect
 from data import db_session
 from data.users import User, Account
@@ -8,12 +7,22 @@ from forms.user import RegisterForm, LoginForm, EditForm
 from forms.post import NewPostForm
 import random
 import datetime
+import os
+from PIL import Image
+from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
+app.config['UPLOAD_FOLDER'] = 'static/img/users_avatars'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @login_manager.user_loader
@@ -51,9 +60,31 @@ def get_username_by_user_id(user_id):
     return None
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
+    form = NewPostForm()
+
+    if form.validate_on_submit():
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            file_path=None  # Инициализируем file_path как None
+        )
+        db_sess.add(post)
+        db_sess.commit()
+
+        # Если был прикреплен файл, сохраняем его
+        if form.file.data:
+            filename = secure_filename(form.file.data.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            form.file.data.save(file_path)
+            post.file_path = file_path
+            db_sess.commit()
+
+        return redirect('/')
+
+    # Обработка запроса на отображение постов
     if current_user.is_authenticated:
         account = db_sess.query(Account).filter(Account.id == current_user.id).first()
         follow = account.follow
@@ -66,7 +97,6 @@ def index():
                 post.author = get_name_by_user_id(post.author)
                 post.time = post.time.strftime("%d:%m:%Y %H:%M")
                 posts.append(post)
-        posts = list(reversed(posts))
     else:
         posts_all = db_sess.query(Post).all()
         posts = []
@@ -76,9 +106,10 @@ def index():
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
             posts.append(post)
-        posts = list(reversed(posts))
 
-    return render_template('index.html', posts=posts)
+    posts = list(reversed(posts))
+
+    return render_template('index.html', form=form, posts=posts)
 
 
 @app.route("/newpost", methods=['GET', 'POST'])
@@ -170,17 +201,12 @@ def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.username == username).first()
     account = db_sess.query(Account).filter(Account.id == user.id).first()
-    params = {}
-    params['accid'] = account.id
-    params['username'] = username
+    params = {'accid': account.id, 'username': username, 'avatar': account.avatar, 'bio': account.bio,
+              'folowers': len(account.followers), 'folow': len(account.follow)}
     if account.name == username:
         params['name'] = f"@{username}"
     else:
         params['name'] = account.name
-    params['avatar'] = account.avatar
-    params['bio'] = account.bio
-    params['folowers'] = len(account.followers)
-    params['folow'] = len(account.follow)
     if current_user.is_authenticated:
         params['is_follow'] = int(current_user.id) in account.followers
     return render_template('profile.html', **params)
@@ -214,12 +240,33 @@ def edit_profile():
         accaunt.bio = form.bio.data
         accaunt.name = form.name.data
         user.username = form.username.data
+
+        # Загрузка и сохранение аватарки
+        file = form.avatar.data
+        if file and allowed_file(file.filename):
+            filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            img = Image.open(file)
+            # Обрезаем изображение до соотношения сторон 1:1
+            width, height = img.size
+            new_size = min(width, height)
+            left = (width - new_size) / 2
+            top = (height - new_size) / 2
+            right = (width + new_size) / 2
+            bottom = (height + new_size) / 2
+            img_cropped = img.crop((left, top, right, bottom))
+            # Сохраняем обрезанное изображение
+            img_cropped.save(filepath, 'PNG')
+
+            accaunt.avatar = "/" + filepath
+
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     return render_template('edit_profile.html', title='Редактировать', form=form)
 
 
 @app.route('/unfollow/<username>/<accid>')
+@login_required
 def unfollow(username, accid):
     db_sess = db_session.create_session()
     acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
