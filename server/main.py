@@ -32,9 +32,13 @@ def get_avatar_by_user_id(user_id):
 
 def get_username_by_user_id(user_id):
     db_sess = db_session.create_session()
-    user = db_sess.query(Account).filter(Account.id == user_id).first()
-    if user:
-        return user.avatar
+    account = db_sess.query(Account).filter(Account.id == user_id).first()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if account:
+        if account.name != user.username:
+            return account.name
+        else:
+            return f"@{user.username}"
     return None
 
 
@@ -48,6 +52,8 @@ def index():
         posts = []
         for post in posts_all:
             if post.author in follow or post.author == current_user.id:
+                post.avatar = get_avatar_by_user_id(current_user.id)
+                post.author = get_username_by_user_id(current_user.id)
                 posts.append(post)
         posts = list(reversed(posts))
     else:
