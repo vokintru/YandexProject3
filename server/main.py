@@ -30,7 +30,7 @@ def get_avatar_by_user_id(user_id):
     return None
 
 
-def get_username_by_user_id(user_id):
+def get_name_by_user_id(user_id):
     db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == user_id).first()
     user = db_sess.query(User).filter(User.id == user_id).first()
@@ -39,6 +39,15 @@ def get_username_by_user_id(user_id):
             return account.name
         else:
             return f"@{user.username}"
+    return None
+
+
+def get_username_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    account = db_sess.query(Account).filter(Account.id == user_id).first()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if account:
+        return f"@{user.username}"
     return None
 
 
@@ -52,12 +61,22 @@ def index():
         posts = []
         for post in posts_all:
             if post.author in follow or post.author == current_user.id:
-                post.avatar = get_avatar_by_user_id(current_user.id)
-                post.author = get_username_by_user_id(current_user.id)
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
                 posts.append(post)
         posts = list(reversed(posts))
     else:
-        posts = db_sess.query(Post).all()
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            post.avatar = get_avatar_by_user_id(post.author)
+            post.username = get_username_by_user_id(post.author)
+            post.author = get_name_by_user_id(post.author)
+            post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            posts.append(post)
+        posts = list(reversed(posts))
 
     return render_template('index.html', posts=posts)
 
@@ -69,7 +88,6 @@ def newpost():
         db_sess = db_session.create_session()
         post = Post(
             author=current_user.id,
-            authorname=current_user.username,
             text=form.text.data
         )
         db_sess.add(post)
@@ -112,16 +130,16 @@ def reqister():
         )
 
         default_avatars = [
-            "static/img/default_avatars/avatar0.png",
-            "static/img/default_avatars/avatar1.png",
-            "static/img/default_avatars/avatar2.png",
-            "static/img/default_avatars/avatar3.png",
-            "static/img/default_avatars/avatar4.png",
-            "static/img/default_avatars/avatar5.png",
-            "static/img/default_avatars/avatar6.png",
-            "static/img/default_avatars/avatar7.png",
-            "static/img/default_avatars/avatar8.png",
-            "static/img/default_avatars/avatar9.png",
+            "/static/img/default_avatars/avatar0.png",
+            "/static/img/default_avatars/avatar1.png",
+            "/static/img/default_avatars/avatar2.png",
+            "/static/img/default_avatars/avatar3.png",
+            "/static/img/default_avatars/avatar4.png",
+            "/static/img/default_avatars/avatar5.png",
+            "/static/img/default_avatars/avatar6.png",
+            "/static/img/default_avatars/avatar7.png",
+            "/static/img/default_avatars/avatar8.png",
+            "/static/img/default_avatars/avatar9.png",
         ]
         account = Account(
             name=form.username.data,
@@ -135,6 +153,7 @@ def reqister():
         db_sess.add(user)
         db_sess.add(account)
         db_sess.commit()
+        login_user(user, remember=True)
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -154,12 +173,16 @@ def profile(username):
     params = {}
     params['accid'] = account.id
     params['username'] = username
-    params['name'] = account.name
+    if account.name == username:
+        params['name'] = f"@{username}"
+    else:
+        params['name'] = account.name
     params['avatar'] = account.avatar
     params['bio'] = account.bio
     params['folowers'] = len(account.followers)
     params['folow'] = len(account.follow)
-    params['is_follow'] = int(current_user.id) in account.followers
+    if current_user.is_authenticated:
+        params['is_follow'] = int(current_user.id) in account.followers
     return render_template('profile.html', **params)
 
 

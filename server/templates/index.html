@@ -10,12 +10,12 @@
         {% for post in posts %}
             <div class="post border rounded p-3 mb-3">
                 <div class="media">
-                    <img src="аватарка.jpg" class="mr-3" alt="Аватар" style="width:64px;height:64px;">
+                    <img src={{post.avatar}} class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                     <div class="media-body">
-                        <h5 class="mt-0">@{{post.username}}</h5>
+                        <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                         <hr>
-                        <p>Сам пост или текст с прикрепленным фото/видео</p>
-                        <p class="post-date">Дата поста</p>
+                        <p>{{post.text}}</p>
+                        <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
                     </div>
                 </div>
             </div>

@@ -13,20 +13,29 @@
     {% endblock %}
 </head>
 <body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <header>
     <nav class="navbar" style="background-color: #79b253;">
-        <a href="/"><img src="/static/img/logo.png" height=56px width=64px></a>
+        <a href="/"><img src="/static/img/logo.png" height="56px" width="64px"></a>
         {% if current_user.is_authenticated %}
-            <a class="navbar-brand btn btn-danger" href="/logout">Logout (@{{ current_user.username }})</a>
+            <div class="dropdown">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    @{{ current_user.username }}
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="/users/@{{ current_user.username }}">Профиль</a>
+                    <a class="dropdown-item" href="/logout">Выход</a>
+                </div>
+            </div>
         {% else %}
-    <p>
-        <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
-        <a class="btn btn-success" href="/login">Войти</a>
-    </p>
-{% endif %}
+            <p>
+                <a class="btn btn-primary" href="/register">Зарегистрироваться</a>
+                <a class="btn btn-success" href="/login">Войти</a>
+            </p>
+        {% endif %}
     </nav>
 </header>
-<!-- Begin page content -->
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>

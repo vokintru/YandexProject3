@@ -29,20 +29,24 @@
             </div>
 
             <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-                <h3>@{{name}}</h3>
+                <h3>{{name}}</h3>
                 <br>
                 <p>{{bio}}</p>
             </div>
         </div>
     </div>
 </div>
-{% if current_user.id == accid %}
-    <a class="btn btn-primary" href="/edit_profile" style="width: 27%; margin: 20px">Редактировать</a>
-{% else %}
-    {% if is_follow %}
-        <a class="btn btn-danger" href="/unfollow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Отписаться</a>
+{% if current_user.is_authenticated %}
+    {% if current_user.id == accid %}
+        <a class="btn btn-primary" href="/edit_profile" style="width: 27%; margin: 20px">Редактировать</a>
     {% else %}
-        <a class="btn btn-success" href="/follow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Подписаться</a>
+        {% if is_follow %}
+            <a class="btn btn-danger" href="/unfollow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Отписаться</a>
+        {% else %}
+            <a class="btn btn-success" href="/follow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Подписаться</a>
+        {% endif %}
     {% endif %}
+{% else %}
+    <a class="btn btn-secondary" href="#" style="width: 27%; margin: 20px">Зарегистрируйтесь или войдите чтобы подписываться</a>
 {% endif %}
 {% endblock %}
