@@ -36,4 +36,13 @@
         </div>
     </div>
 </div>
+{% if current_user.id == accid %}
+    <a class="btn btn-primary" href="/edit_profile" style="width: 27%; margin: 20px">Редактировать</a>
+{% else %}
+    {% if is_follow %}
+        <a class="btn btn-danger" href="/unfollow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Отписаться</a>
+    {% else %}
+        <a class="btn btn-success" href="/follow/{{username}}/{{accid}}" style="width: 27%; margin: 20px">Подписаться</a>
+    {% endif %}
+{% endif %}
 {% endblock %}
