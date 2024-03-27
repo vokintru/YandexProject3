@@ -18,7 +18,7 @@ class LoginForm(FlaskForm):
 
 
 class EditForm(FlaskForm):
-    username = StringField('Имя Пользователя', validators=[DataRequired()])
-    name = StringField('Имя Аккаунта', validators=[DataRequired()])
+    name = StringField('Имя', validators=[DataRequired()])
+    username = StringField('Юзернейм', validators=[DataRequired()])
     bio = TextAreaField('Биография', validators=[DataRequired()])
     submit = SubmitField('Сохранить')
