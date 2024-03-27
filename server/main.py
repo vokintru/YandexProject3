@@ -1,5 +1,4 @@
 from pickle import loads, dumps
-
 from flask import Flask, render_template, redirect
 from data import db_session
 from data.users import User, Account
@@ -9,6 +8,7 @@ from forms.post import NewPostForm
 import random
 import datetime
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from sqlalchemy import func
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -40,15 +40,36 @@ def index():
     return render_template('index.html', posts=posts)
 
 
+@app.route('/tegs_post/<teg>')
+def tegs_post(teg):
+    db_sess = db_session.create_session()
+    posts_all = db_sess.query(Post).all()
+    posts = []
+    for post in posts_all:
+        if '#' + teg in post.tegs:
+            posts.append(post)
+    posts = list(reversed(posts))
+    #posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
+    print(posts)
+    #posts = list(reversed(posts))
+    return render_template('index.html', posts=posts)
+
+
+
 @app.route("/newpost", methods=['GET', 'POST'])
 def newpost():
     form = NewPostForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
         post = Post(
             author=current_user.id,
             authorname=current_user.username,
-            text=form.text.data
+            text=form.text.data,
+            tegs=tegi
         )
         db_sess.add(post)
         db_sess.commit()
