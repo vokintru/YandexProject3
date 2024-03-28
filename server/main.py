@@ -69,7 +69,7 @@ def index():
         post = Post(
             author=current_user.id,
             text=form.text.data,
-            file_path=None  # Инициализируем file_path как None
+            file_path=None
         )
         db_sess.add(post)
         db_sess.commit()
