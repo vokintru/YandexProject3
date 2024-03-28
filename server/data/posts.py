@@ -17,6 +17,7 @@ class Post(SqlAlchemyBase, UserMixin):
     text = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     file = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     time = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    tegs = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):
         return f'<Post> {self.id} {self.author} {self.text} {self.file} {self.time}'
