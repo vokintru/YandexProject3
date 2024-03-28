@@ -67,7 +67,6 @@ def newpost():
                 tegi.append(i)
         post = Post(
             author=current_user.id,
-            authorname=current_user.username,
             text=form.text.data,
             tegs=tegi
         )
