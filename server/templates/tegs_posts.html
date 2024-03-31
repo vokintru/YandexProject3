@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<br><br>
+    <ul>
+        {% for post in posts %}
+            <div class="post border rounded p-3 mb-3">
+                <div class="media">
+                    <img src={{post.avatar}} class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                    <div class="media-body">
+                        <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
+                        <hr>
+                        <p>{{post.text}}</p>
+                        {% if post.file_path %}
+                            {% if post.file_type == "img" %}
+                                <img src="/{{post.file_path}}" style="width: 300px; height: auto;">
+                            {% elif post.file_type == "video" %}
+                                <video controls width="300">
+                                  <source src=/{{post.file_path}} />
+                                </video>
+                            {% else %}
+                                <p><a href=/{{post.file_path}}>Скачать файл</a></p>
+                            {% endif %}
+                        {% endif %}
+                        <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
+                    </div>
+                </div>
+            </div>
+            <br>
+        {% endfor %}
+    </ul>
+{% endblock %}

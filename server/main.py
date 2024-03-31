@@ -7,6 +7,8 @@ from forms.user import RegisterForm, LoginForm, EditForm
 from forms.post import NewPostForm
 import random
 import datetime
+import os
+from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import func
 
@@ -14,6 +16,8 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
+app.config['UPLOAD_FOLDER'] = 'static/content'
+ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
 @login_manager.user_loader
@@ -22,9 +26,70 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route("/")
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+
+
+def get_avatar_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(Account).filter(Account.id == user_id).first()
+    if user:
+        return user.avatar
+    return None
+
+
+def get_name_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    account = db_sess.query(Account).filter(Account.id == user_id).first()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if account:
+        if account.name != user.username:
+            return account.name
+        else:
+            return f"@{user.username}"
+    return None
+
+
+def get_username_by_user_id(user_id):
+    db_sess = db_session.create_session()
+    account = db_sess.query(Account).filter(Account.id == user_id).first()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    if account:
+        return f"@{user.username}"
+    return None
+
+
+@app.route("/", methods=['GET', 'POST'])
 def index():
     db_sess = db_session.create_session()
+    form = NewPostForm()
+
+    if form.validate_on_submit():
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            file_path=None,
+            tegs=tegi
+        )
+        db_sess.add(post)
+        db_sess.commit()
+
+        if form.file.data:
+            posts_all = db_sess.query(Post).all()
+            filename = secure_filename(form.file.data.filename)
+            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
+            form.file.data.save(file_path)
+            post.file_path = file_path
+            db_sess.commit()
+
+        return redirect('/')
+
     if current_user.is_authenticated:
         account = db_sess.query(Account).filter(Account.id == current_user.id).first()
         follow = account.follow
@@ -32,12 +97,38 @@ def index():
         posts = []
         for post in posts_all:
             if post.author in follow or post.author == current_user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
                 posts.append(post)
-        posts = list(reversed(posts))
     else:
-        posts = db_sess.query(Post).all()
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            post.avatar = get_avatar_by_user_id(post.author)
+            post.username = get_username_by_user_id(post.author)
+            post.author = get_name_by_user_id(post.author)
+            post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                              'ico', 'tif', 'tiff']:
+                post.file_type = "img"
+            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                post.file_type = "video"
+            else:
+                post.file_type = "None"
+            posts.append(post)
 
-    return render_template('index.html', posts=posts)
+    posts = list(reversed(posts))
+
+    return render_template('index.html', form=form, posts=posts)
 
 
 @app.route('/tegs_post/<teg>')
@@ -45,15 +136,26 @@ def tegs_post(teg):
     db_sess = db_session.create_session()
     posts_all = db_sess.query(Post).all()
     posts = []
+    print(teg)
     for post in posts_all:
-        if '#' + teg in post.tegs:
+        post.avatar = get_avatar_by_user_id(post.author)
+        post.username = get_username_by_user_id(post.author)
+        post.author = get_name_by_user_id(post.author)
+        post.time = post.time.strftime("%d:%m:%Y %H:%M")
+        if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                          'ico', 'tif', 'tiff']:
+            post.file_type = "img"
+        elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+            post.file_type = "video"
+        else:
+            post.file_type = "None"
+        if post.tegs is not None and '#' + teg in post.tegs:
             posts.append(post)
     posts = list(reversed(posts))
-    #posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
+    # posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
     print(posts)
-    #posts = list(reversed(posts))
-    return render_template('index.html', posts=posts)
-
+    # posts = list(reversed(posts))
+    return render_template('tegs_posts.html', posts=posts)
 
 
 @app.route("/newpost", methods=['GET', 'POST'])

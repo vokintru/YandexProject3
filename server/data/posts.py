@@ -20,4 +20,4 @@ class Post(SqlAlchemyBase, UserMixin):
     tegs = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<Post> {self.id} {self.author} {self.text} {self.file} {self.time}'
+        return f'<Post> {self.id} {self.author} {self.text} {self.file_path} {self.time}'
