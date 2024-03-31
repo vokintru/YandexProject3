@@ -37,7 +37,7 @@ def index():
     else:
         posts = db_sess.query(Post).all()
 
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts, len=len)
 
 
 @app.route('/tegs_post/<teg>')
@@ -49,11 +49,10 @@ def tegs_post(teg):
         if '#' + teg in post.tegs:
             posts.append(post)
     posts = list(reversed(posts))
-    #posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
+    # posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
     print(posts)
-    #posts = list(reversed(posts))
+    # posts = list(reversed(posts))
     return render_template('index.html', posts=posts)
-
 
 
 @app.route("/newpost", methods=['GET', 'POST'])
@@ -68,7 +67,8 @@ def newpost():
         post = Post(
             author=current_user.id,
             text=form.text.data,
-            tegs=tegi
+            tegs=tegi,
+            liked=[]
         )
         db_sess.add(post)
         db_sess.commit()
@@ -207,6 +207,30 @@ def unfollow(username, accid):
     acc2.followers = list(set(f2))
     db_sess.commit()
     return redirect(f'/users/@{username}')
+
+
+@app.route('/like/<post_id>')
+def like(post_id):
+    db_sess = db_session.create_session()
+    acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    liked = list(post.liked)
+    liked.append(acc.id)
+    post.liked = list(set(liked))
+    db_sess.commit()
+    return redirect("/")
+
+
+@app.route('/unlike/<post_id>')
+def unlike(post_id):
+    db_sess = db_session.create_session()
+    acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    liked = list(post.liked)
+    liked.remove(int(acc.id))
+    post.liked = list(set(liked))
+    db_sess.commit()
+    return redirect("/")
 
 
 def main():
