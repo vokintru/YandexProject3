@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Редактировать профиль</h1>
 
-<form action="" method="post">
+<form action="" method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <p>
         {{ form.name.label }}<br>
@@ -27,6 +27,15 @@
         {{ form.bio.label }}<br>
         {{ form.bio(class="form-control") }}<br>
         {% for error in form.bio.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.avatar.label }}<br>
+        {{ form.avatar(class="form-control-file") }}<br>
+        {% for error in form.avatar.errors %}
             <p class="alert alert-danger" role="alert">
                 {{ error }}
             </p>

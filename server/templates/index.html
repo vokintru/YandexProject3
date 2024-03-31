@@ -3,7 +3,29 @@
 {% block content %}
 <h1>Лента</h1>
 {% if current_user.is_authenticated %}
-    <a href="/newpost" class="btn btn-secondary">Создать квакание</a>
+    <form action="" method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.text.label }}<br>
+                {{ form.text(class="form-control", type="text") }}<br>
+                {% for error in form.text.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.file.label }}<br>
+                {{ form.file(class="form-control-file") }}<br>
+                {% for error in form.file.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+            <div>{{ message }}</div>
+        </form>
 {% endif %}
 <br><br>
     <ul>
@@ -14,7 +36,18 @@
                     <div class="media-body">
                         <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                         <hr>
-                        <p id="content">{{post.text}}</p>
+                        <p>{{post.text}}</p>
+                        {% if post.file_path %}
+                            {% if post.file_type == "img" %}
+                                <img src="{{post.file_path}}" style="width: 300px; height: auto;">
+                            {% elif post.file_type == "video" %}
+                                <video controls width="300">
+                                  <source src={{post.file_path}} />
+                                </video>
+                            {% else %}
+                                <p><a href={{post.file_path}}>Скачать файл</a></p>
+                            {% endif %}
+                        {% endif %}
                         <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
                     </div>
                 </div>
