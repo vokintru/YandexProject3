@@ -16,19 +16,19 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
-app.config['UPLOAD_FOLDER'] = 'static/img/users_avatars'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+app.config['UPLOAD_FOLDER'] = 'static/content'
+ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    return db_sess.get(User, user_id)
 
 
 def get_avatar_by_user_id(user_id):
@@ -74,17 +74,17 @@ def index():
         db_sess.add(post)
         db_sess.commit()
 
-        # Если был прикреплен файл, сохраняем его
         if form.file.data:
+            posts_all = db_sess.query(Post).all()
             filename = secure_filename(form.file.data.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
             form.file.data.save(file_path)
             post.file_path = file_path
             db_sess.commit()
 
         return redirect('/')
 
-    # Обработка запроса на отображение постов
     if current_user.is_authenticated:
         account = db_sess.query(Account).filter(Account.id == current_user.id).first()
         follow = account.follow
@@ -96,6 +96,13 @@ def index():
                 post.username = get_username_by_user_id(post.author)
                 post.author = get_name_by_user_id(post.author)
                 post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
                 posts.append(post)
     else:
         posts_all = db_sess.query(Post).all()
