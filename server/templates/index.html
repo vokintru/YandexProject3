@@ -39,13 +39,13 @@
                         <p>{{post.text}}</p>
                         {% if post.file_path %}
                             {% if post.file_type == "img" %}
-                                <img src="{{post.file_path}}" style="width: 300px; height: auto;">
+                                <img src="/{{post.file_path}}" style="width: 550px; height: auto;">
                             {% elif post.file_type == "video" %}
-                                <video controls width="300">
-                                  <source src={{post.file_path}} />
+                                <video controls width="550">
+                                  <source src=/{{post.file_path}} />
                                 </video>
                             {% else %}
-                                <p><a href={{post.file_path}}>Скачать файл</a></p>
+                                <p><a href=/{{post.file_path}}>Скачать файл</a></p>
                             {% endif %}
                         {% endif %}
                         <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>

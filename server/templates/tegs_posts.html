@@ -13,9 +13,9 @@
                         <p>{{post.text}}</p>
                         {% if post.file_path %}
                             {% if post.file_type == "img" %}
-                                <img src="/{{post.file_path}}" style="width: 300px; height: auto;">
+                                <img src="/{{post.file_path}}" style="width: 550px; height: auto;">
                             {% elif post.file_type == "video" %}
-                                <video controls width="300">
+                                <video controls width="550">
                                   <source src=/{{post.file_path}} />
                                 </video>
                             {% else %}

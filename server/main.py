@@ -8,6 +8,7 @@ from forms.post import NewPostForm
 import random
 import datetime
 import os
+from PIL import Image
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from sqlalchemy import func
@@ -23,10 +24,11 @@ ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    return db_sess.get(User, user_id)
 
 
 def allowed_file(filename):
+    print(filename)
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
@@ -260,7 +262,24 @@ def profile(username):
     params['folowers'] = len(account.followers)
     params['folow'] = len(account.follow)
     params['is_follow'] = int(current_user.id) in account.followers
-    return render_template('profile.html', **params)
+    posts_all = db_sess.query(Post).all()
+    posts = []
+    for post in posts_all:
+        if post.author == user.id:
+            post.avatar = get_avatar_by_user_id(post.author)
+            post.username = get_username_by_user_id(post.author)
+            post.author = get_name_by_user_id(post.author)
+            post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                              'ico', 'tif', 'tiff']:
+                post.file_type = "img"
+            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                post.file_type = "video"
+            else:
+                post.file_type = "None"
+            posts.append(post)
+    posts = list(reversed(posts))
+    return render_template('profile.html', posts=posts, **params)
 
 
 # функция для кнопки подписаться
@@ -291,6 +310,24 @@ def edit_profile():
         accaunt.bio = form.bio.data
         accaunt.name = form.name.data
         user.username = form.username.data
+        # Загрузка и сохранение аватарки
+        file = form.avatar.data
+        if file and allowed_file(file.filename):
+            filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        img = Image.open(file)
+        # Обрезаем изображение до соотношения сторон 1:1
+        width, height = img.size
+        new_size = min(width, height)
+        left = (width - new_size) / 2
+        top = (height - new_size) / 2
+        right = (width + new_size) / 2
+        bottom = (height + new_size) / 2
+        img_cropped = img.crop((left, top, right, bottom))
+        # Сохраняем обрезанное изображение
+        img_cropped.save(filepath, 'PNG')
+
+        accaunt.avatar = "/" + filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     return render_template('edit_profile.html', title='Редактировать', form=form)
