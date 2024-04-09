@@ -4,7 +4,7 @@ from data import db_session
 from data.users import User, Account
 from data.posts import Post
 from forms.user import RegisterForm, LoginForm, EditForm
-from forms.post import NewPostForm
+from forms.post import NewPostForm, RepostForm
 import random
 import datetime
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -68,12 +68,42 @@ def newpost():
             author=current_user.id,
             text=form.text.data,
             tegs=tegi,
-            liked=[]
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
         )
         db_sess.add(post)
         db_sess.commit()
         return redirect('/')
     return render_template('newpost.html', form=form)
+
+
+@app.route("/repost/<orig_post>", methods=['GET', 'POST'])
+def repost(orig_post):
+    form = RepostForm()
+    db_sess = db_session.create_session()
+    orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+    print(orig_db.author)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            tegs=tegi,
+            liked=[],
+            orig_post=orig_post,
+            count_reposts=0
+        )
+        orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+        orig_db.count_reposts = 1
+        db_sess.add(post)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('repost.html', form=form, post=orig_db)
 
 
 @app.route('/login', methods=['GET', 'POST'])
