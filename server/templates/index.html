@@ -108,23 +108,23 @@
                             <hr>
                             <div class="post border rounded p-3 mb-3">
                             <div class="media">
-                        <img src="{{posts[post.orig_post].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                        <img src="{{orig_posts[post.orig_post].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                         <div class="media-body">
-                            <h5 class="mt-0"><a href=/users/{{posts[post.orig_post].username}}>{{posts[post.orig_post].author}}</a></h5>
+                            <h5 class="mt-0"><a href=/users/{{orig_posts[post.orig_post].username}}>{{orig_posts[post.orig_post].author}}</a></h5>
                             <hr>
-                            <p id="content">{{posts[post.orig_post].text}}</p>
-                            {% if posts[post.orig_post].file_path %}
+                            <p id="content">{{orig_posts[post.orig_post].text}}</p>
+                            {% if orig_posts[post.orig_post].file_path %}
                                 {% if [post.orig_post].file_type == "img" %}
-                                    <img src="/{{posts[post.orig_post].file_path}}" style="width: 550px; height: auto;">
-                                {% elif posts[post.orig_post].file_type == "video" %}
+                                    <img src="/{{orig_posts[post.orig_post].file_path}}" style="width: 550px; height: auto;">
+                                {% elif orig_posts[post.orig_post].file_type == "video" %}
                                     <video controls width="550">
-                                      <source src=/{{posts[post.orig_post].file_path}} />
+                                      <source src=/{{orig_posts[post.orig_post].file_path}} />
                                     </video>
                                 {% else %}
-                                    <p><a href=/{{posts[post.orig_post].file_path}}>Скачать файл</a></p>
+                                    <p><a href=/{{orig_posts[post.orig_post].file_path}}>Скачать файл</a></p>
                                 {% endif %}
                             {% endif %}
-                            <p class="post-date" style="color: grey; font-size: smaller;">{{posts[post.orig_post].time}}</p>
+                            <p class="post-date" style="color: grey; font-size: smaller;">{{orig_posts[post.orig_post].time}}</p>
                         </div>
                     </div>
                             </div>

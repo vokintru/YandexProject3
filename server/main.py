@@ -18,6 +18,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
 app.config['UPLOAD_FOLDER'] = 'static/content'
+app.config['UPLOAD_FOLDER_AVATAR'] = 'static/img/users_avatars'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
@@ -384,20 +385,20 @@ def edit_profile():
         file = form.avatar.data
         if file and allowed_file(file.filename):
             filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        img = Image.open(file)
-        # Обрезаем изображение до соотношения сторон 1:1
-        width, height = img.size
-        new_size = min(width, height)
-        left = (width - new_size) / 2
-        top = (height - new_size) / 2
-        right = (width + new_size) / 2
-        bottom = (height + new_size) / 2
-        img_cropped = img.crop((left, top, right, bottom))
-        # Сохраняем обрезанное изображение
-        img_cropped.save(filepath, 'PNG')
+            filepath = os.path.join(app.config['UPLOAD_FOLDER_AVATAR'], filename)
+            img = Image.open(file)
+            # Обрезаем изображение до соотношения сторон 1:1
+            width, height = img.size
+            new_size = min(width, height)
+            left = (width - new_size) / 2
+            top = (height - new_size) / 2
+            right = (width + new_size) / 2
+            bottom = (height + new_size) / 2
+            img_cropped = img.crop((left, top, right, bottom))
+            # Сохраняем обрезанное изображение
+            img_cropped.save(filepath, 'PNG')
 
-        accaunt.avatar = "/" + filepath
+            accaunt.avatar = "/" + filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     return render_template('edit_profile.html', title='Редактировать', form=form)
