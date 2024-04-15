@@ -297,7 +297,7 @@ def reqister():
         account = Account(
             name=form.username.data,
             bio=f"Мы почти ничего не знаем о {form.username.data}, но мы уверены, что {form.username.data} — "
-                f"отличный человек.",
+                f"отличная жаба.",
             avatar=random.choice(default_avatars),
             followers=[],
             follow=[]
@@ -306,6 +306,7 @@ def reqister():
         db_sess.add(user)
         db_sess.add(account)
         db_sess.commit()
+        login_user(user, remember=True)
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
