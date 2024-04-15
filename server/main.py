@@ -444,7 +444,7 @@ def unlike(post_id):
 
 def main():
     db_session.global_init("db/users.db")
-    app.run()
+    app.run(host='0.0.0.0')
 
 
 if __name__ == '__main__':
