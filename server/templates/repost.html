@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Создать реквакание</h1>
+    <div class="post border rounded p-3 mb-3">
+                    <div class="media">
+                        <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                        <div class="media-body">
+                            <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
+                            <hr>
+                            <p id="content">{{post.text}}</p>
+                            <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <br>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.text.label }}<br>
+            {{ form.text(class="form-control", type="text") }}<br>
+            {% for error in form.text.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endfor %}
+        </p>
+        <p>Загрузка файлов будет в будущем</p>
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+        <div>{{ message }}</div>
+    </form>
+{% endblock %}

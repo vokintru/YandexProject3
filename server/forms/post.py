@@ -8,3 +8,8 @@ class NewPostForm(FlaskForm):
     file = FileField('Прикрепить жабфайл')
     submit = SubmitField('Квакнуть')
 
+
+class RepostForm(FlaskForm):
+    text = TextAreaField('Реквакание', validators=[DataRequired()])
+    submit = SubmitField('Реквакнуть')
+

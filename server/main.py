@@ -4,7 +4,7 @@ from data import db_session
 from data.users import User, Account
 from data.posts import Post
 from forms.user import RegisterForm, LoginForm, EditForm
-from forms.post import NewPostForm
+from forms.post import NewPostForm, RepostForm
 import random
 import datetime
 import os
@@ -130,7 +130,7 @@ def index():
 
     posts = list(reversed(posts))
 
-    return render_template('index.html', form=form, posts=posts)
+    return render_template('index.html', form=form, posts=posts, len=len)
 
 
 @app.route('/tegs_post/<teg>')
@@ -172,12 +172,43 @@ def newpost():
         post = Post(
             author=current_user.id,
             text=form.text.data,
-            tegs=tegi
+            tegs=tegi,
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
         )
         db_sess.add(post)
         db_sess.commit()
         return redirect('/')
     return render_template('newpost.html', form=form)
+
+
+@app.route("/repost/<orig_post>", methods=['GET', 'POST'])
+def repost(orig_post):
+    form = RepostForm()
+    db_sess = db_session.create_session()
+    orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+    print(orig_db.author)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            tegs=tegi,
+            liked=[],
+            orig_post=orig_post,
+            count_reposts=0
+        )
+        orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+        orig_db.count_reposts = 1
+        db_sess.add(post)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('repost.html', form=form, post=orig_db)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -346,6 +377,30 @@ def unfollow(username, accid):
     acc2.followers = list(set(f2))
     db_sess.commit()
     return redirect(f'/users/@{username}')
+
+
+@app.route('/like/<post_id>')
+def like(post_id):
+    db_sess = db_session.create_session()
+    acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    liked = list(post.liked)
+    liked.append(acc.id)
+    post.liked = list(set(liked))
+    db_sess.commit()
+    return redirect("/")
+
+
+@app.route('/unlike/<post_id>')
+def unlike(post_id):
+    db_sess = db_session.create_session()
+    acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    liked = list(post.liked)
+    liked.remove(int(acc.id))
+    post.liked = list(set(liked))
+    db_sess.commit()
+    return redirect("/")
 
 
 def main():

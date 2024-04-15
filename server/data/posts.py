@@ -18,6 +18,9 @@ class Post(SqlAlchemyBase, UserMixin):
     file_path = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     time = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     tegs = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    liked = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    orig_post = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    count_reposts = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
 
     def __repr__(self):
         return f'<Post> {self.id} {self.author} {self.text} {self.file_path} {self.time}'
