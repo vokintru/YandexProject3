@@ -28,7 +28,6 @@ def load_user(user_id):
 
 
 def allowed_file(filename):
-    print(filename)
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
@@ -76,7 +75,10 @@ def index():
             author=current_user.id,
             text=form.text.data,
             file_path=None,
-            tegs=tegi
+            tegs=tegi,
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
         )
         db_sess.add(post)
         db_sess.commit()
@@ -88,6 +90,9 @@ def index():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
             form.file.data.save(file_path)
             post.file_path = file_path
+            post.liked = []
+            post.orig_post = 0
+            post.count_reposts = 0
             db_sess.commit()
 
         return redirect('/')
@@ -103,6 +108,11 @@ def index():
                 post.username = get_username_by_user_id(post.author)
                 post.author = get_name_by_user_id(post.author)
                 post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if current_user.id in post.liked:
+                    post.self_like = True
+                else:
+                    post.self_like = False
+                post.liked = len(post.liked)
                 if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                                   'ico', 'tif', 'tiff']:
                     post.file_type = "img"
@@ -119,6 +129,8 @@ def index():
             post.username = get_username_by_user_id(post.author)
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            post.self_like = False
+            post.liked = len(post.liked)
             if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                               'ico', 'tif', 'tiff']:
                 post.file_type = "img"
@@ -138,7 +150,6 @@ def tegs_post(teg):
     db_sess = db_session.create_session()
     posts_all = db_sess.query(Post).all()
     posts = []
-    print(teg)
     for post in posts_all:
         post.avatar = get_avatar_by_user_id(post.author)
         post.username = get_username_by_user_id(post.author)
@@ -155,7 +166,6 @@ def tegs_post(teg):
             posts.append(post)
     posts = list(reversed(posts))
     # posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
-    print(posts)
     # posts = list(reversed(posts))
     return render_template('tegs_posts.html', posts=posts)
 
@@ -183,31 +193,59 @@ def newpost():
     return render_template('newpost.html', form=form)
 
 
+def find_orig_post(db_sess, orig_post):
+    orig_db = db_sess.query(Post).filter(Post.id == orig_post.id).first()
+    while True:
+        if orig_db.orig_post == 0:
+            return orig_db
+        else:
+            orig_db = db_sess.query(Post).filter(Post.id == orig_db.orig_post).first()
+
+
 @app.route("/repost/<orig_post>", methods=['GET', 'POST'])
 def repost(orig_post):
     form = RepostForm()
     db_sess = db_session.create_session()
     orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
-    print(orig_db.author)
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            tegs=tegi,
-            liked=[],
-            orig_post=orig_post,
-            count_reposts=0
-        )
-        orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
-        orig_db.count_reposts = 1
-        db_sess.add(post)
-        db_sess.commit()
-        return redirect('/')
+        if orig_db.orig_post == 0:
+            db_sess = db_session.create_session()
+            tegi = []
+            for i in form.text.data.split(' '):
+                if '#' in i:
+                    tegi.append(i)
+            post = Post(
+                author=current_user.id,
+                text=form.text.data,
+                tegs=tegi,
+                liked=[],
+                orig_post=orig_post,
+                count_reposts=0
+            )
+            orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+            orig_db.count_reposts += 1
+            db_sess.add(post)
+            db_sess.commit()
+            return redirect('/')
+        else:
+            db_sess = db_session.create_session()
+            orig_db = find_orig_post(db_sess, orig_db)
+            tegi = []
+            for i in form.text.data.split(' '):
+                if '#' in i:
+                    tegi.append(i)
+            post = Post(
+                author=current_user.id,
+                text=form.text.data,
+                tegs=tegi,
+                liked=[],
+                orig_post=orig_post,
+                count_reposts=0
+            )
+            orig_db.count_reposts += 1
+            db_sess.add(post)
+            db_sess.commit()
+            return redirect('/')
     return render_template('repost.html', form=form, post=orig_db)
 
 

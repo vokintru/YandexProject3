@@ -23,4 +23,4 @@ class Post(SqlAlchemyBase, UserMixin):
     count_reposts = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
 
     def __repr__(self):
-        return f'<Post> {self.id} {self.author} {self.text} {self.file_path} {self.time}'
+        return f'<Post> id: {self.id} author: {self.author} text: {self.text} file_path: {self.file_path} time: {self.time} liked: {self.liked} orig_post: {self.orig_post} count_reposts: {self.count_reposts}'
