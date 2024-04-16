@@ -4,7 +4,7 @@
     <h1>Создать реквакание</h1>
     <div class="post border rounded p-3 mb-3">
                     <div class="media">
-                        <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                        <img src="../{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                         <div class="media-body">
                             <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                             <hr>
@@ -26,7 +26,7 @@
                 </div>
             {% endfor %}
         </p>
-        <p>Загрузка файлов будет в будущем</p>
+        <p>Загрузка файлов недоступна для рекваков</p>
         <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
         <div>{{ message }}</div>
     </form>

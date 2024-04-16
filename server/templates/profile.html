@@ -8,7 +8,7 @@
         border-radius: 50%; /* Создание круглого изображения */
     }
 </style>
-<h1>Профиль</h1>
+<h1>Профиль жабки</h1>
 <div class="container">
     <div class="row">
         <div class="col">
@@ -54,7 +54,7 @@
         {% for post in posts %}
             <div class="post border rounded p-3 mb-3">
                 <div class="media">
-                    <img src={{post.avatar}} class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                    <img src=../{{post.avatar}} class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                     <div class="media-body">
                         <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                         <hr>

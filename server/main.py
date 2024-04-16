@@ -87,7 +87,7 @@ def index():
         if form.file.data:
             posts_all = db_sess.query(Post).all()
             filename = secure_filename(form.file.data.filename)
-            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_id = f"file_{len(posts_all) + 1}.{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
             form.file.data.save(file_path)
             post.file_path = file_path
@@ -142,8 +142,7 @@ def index():
             posts.append(post)
 
     posts = list(reversed(posts))
-
-    return render_template('index.html', form=form, posts=posts, len=len)
+    return render_template('index.html', form=form, posts=posts, len=len, posts_all=posts_all)
 
 
 @app.route('/tegs_post/<teg>')
@@ -171,29 +170,6 @@ def tegs_post(teg):
     return render_template('tegs_posts.html', posts=posts)
 
 
-@app.route("/newpost", methods=['GET', 'POST'])
-def newpost():
-    form = NewPostForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-        return redirect('/')
-    return render_template('newpost.html', form=form)
-
-
 def find_orig_post(db_sess, orig_post):
     orig_db = db_sess.query(Post).filter(Post.id == orig_post.id).first()
     while True:
@@ -204,6 +180,7 @@ def find_orig_post(db_sess, orig_post):
 
 
 @app.route("/repost/<orig_post>", methods=['GET', 'POST'])
+@login_required
 def repost(orig_post):
     form = RepostForm()
     db_sess = db_session.create_session()
@@ -230,7 +207,11 @@ def repost(orig_post):
             return redirect('/')
         else:
             db_sess = db_session.create_session()
-            orig_db = find_orig_post(db_sess, orig_db)
+            while True:
+                if orig_db.orig_post == 0:
+                    break
+                else:
+                    orig_db = db_sess.query(Post).filter(Post.id == orig_db.orig_post).first()
             tegi = []
             for i in form.text.data.split(' '):
                 if '#' in i:
@@ -247,6 +228,11 @@ def repost(orig_post):
             db_sess.add(post)
             db_sess.commit()
             return redirect('/')
+    orig_db.avatar = get_avatar_by_user_id(orig_db.author)
+    orig_db.username = get_username_by_user_id(orig_db.author)
+    orig_db.author = get_name_by_user_id(orig_db.author)
+    orig_db.time = orig_db.time.strftime("%d:%m:%Y %H:%M")
+    print(orig_db)
     return render_template('repost.html', form=form, post=orig_db)
 
 
@@ -324,32 +310,48 @@ def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.username == username).first()
     account = db_sess.query(Account).filter(Account.id == user.id).first()
-    params = {}
-    params['accid'] = account.id
-    params['username'] = username
-    params['name'] = account.name
-    params['avatar'] = account.avatar
-    params['bio'] = account.bio
-    params['folowers'] = len(account.followers)
-    params['folow'] = len(account.follow)
-    params['is_follow'] = int(current_user.id) in account.followers
-    posts_all = db_sess.query(Post).all()
-    posts = []
-    for post in posts_all:
-        if post.author == user.id:
-            post.avatar = get_avatar_by_user_id(post.author)
-            post.username = get_username_by_user_id(post.author)
-            post.author = get_name_by_user_id(post.author)
-            post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                              'ico', 'tif', 'tiff']:
-                post.file_type = "img"
-            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                post.file_type = "video"
-            else:
-                post.file_type = "None"
-            posts.append(post)
-    posts = list(reversed(posts))
+    if current_user.is_authenticated:
+        params = {'accid': account.id, 'username': username, 'name': account.name, 'avatar': account.avatar,
+                  'bio': account.bio, 'folowers': len(account.followers), 'folow': len(account.follow),
+                  'is_follow': int(current_user.id) in account.followers}
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author == user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
+                posts.append(post)
+        posts = list(reversed(posts))
+    else:
+        params = {'accid': account.id, 'username': username, 'name': account.name, 'avatar': account.avatar,
+                  'bio': account.bio, 'folowers': len(account.followers), 'folow': len(account.follow),
+                  'is_follow': None}
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author == user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
+                posts.append(post)
+        posts = list(reversed(posts))
     return render_template('profile.html', posts=posts, **params)
 
 
@@ -405,6 +407,7 @@ def edit_profile():
 
 
 @app.route('/unfollow/<username>/<accid>')
+@login_required
 def unfollow(username, accid):
     db_sess = db_session.create_session()
     acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -420,6 +423,7 @@ def unfollow(username, accid):
 
 
 @app.route('/like/<post_id>')
+@login_required
 def like(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -432,6 +436,7 @@ def like(post_id):
 
 
 @app.route('/unlike/<post_id>')
+@login_required
 def unlike(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
