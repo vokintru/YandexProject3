@@ -1,17 +1,16 @@
-from pickle import loads, dumps
-from flask import Flask, render_template, redirect
-from data import db_session
-from data.users import User, Account
-from data.posts import Post
-from forms.user import RegisterForm, LoginForm, EditForm
-from forms.post import NewPostForm, RepostForm
-import random
-import datetime
 import os
+import random
+
 from PIL import Image
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, redirect
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from sqlalchemy import func
+from werkzeug.utils import secure_filename
+
+from data import db_session
+from data.posts import Post
+from data.users import User, Account
+from forms.post import NewPostForm, RepostForm
+from forms.user import RegisterForm, LoginForm, EditForm
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -95,32 +94,10 @@ def index():
             post.count_reposts = 0
             db_sess.commit()
 
-        return redirect('/')
+        return redirect('/all_posts')
 
     if current_user.is_authenticated:
-        account = db_sess.query(Account).filter(Account.id == current_user.id).first()
-        follow = account.follow
-        posts_all = db_sess.query(Post).all()
-        posts = []
-        for post in posts_all:
-            if post.author in follow or post.author == current_user.id:
-                post.avatar = get_avatar_by_user_id(post.author)
-                post.username = get_username_by_user_id(post.author)
-                post.author = get_name_by_user_id(post.author)
-                post.time = post.time.strftime("%d:%m:%Y %H:%M")
-                if current_user.id in post.liked:
-                    post.self_like = True
-                else:
-                    post.self_like = False
-                post.liked = len(post.liked)
-                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                                  'ico', 'tif', 'tiff']:
-                    post.file_type = "img"
-                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                    post.file_type = "video"
-                else:
-                    post.file_type = "None"
-                posts.append(post)
+        return redirect('/all_posts')
     else:
         posts_all = db_sess.query(Post).all()
         posts = []
@@ -143,6 +120,134 @@ def index():
     posts = list(reversed(posts))
 
     return render_template('index.html', form=form, posts=posts, len=len)
+
+
+@app.route("/all_posts", methods=['GET', 'POST'])
+def all_posts():
+    db_sess = db_session.create_session()
+    posts_all = db_sess.query(Post).all()
+    posts = process_posts(posts_all)
+    posts = list(reversed(posts))
+
+    form = NewPostForm()
+
+    if form.validate_on_submit():
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            file_path=None,
+            tegs=tegi,
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
+        )
+        db_sess.add(post)
+        db_sess.commit()
+
+        if form.file.data:
+            posts_all = db_sess.query(Post).all()
+            filename = secure_filename(form.file.data.filename)
+            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
+            form.file.data.save(file_path)
+            post.file_path = file_path
+            post.liked = []
+            post.orig_post = 0
+            post.count_reposts = 0
+            db_sess.commit()
+
+        return redirect('/')
+    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+
+
+@app.route("/subscriptions", methods=['GET', 'POST'])
+def subscriptions():
+    if not current_user.is_authenticated:
+        return redirect('/login')  # Редирект на страницу входа, если пользователь не авторизован
+
+    db_sess = db_session.create_session()
+    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    follow = account.follow
+    posts_all = db_sess.query(Post).all()
+    posts = []
+    for post in posts_all:
+        if post.author in follow or post.author == current_user.id:
+            post.avatar = get_avatar_by_user_id(post.author)
+            post.username = get_username_by_user_id(post.author)
+            post.author = get_name_by_user_id(post.author)
+            post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            if current_user.id in post.liked:
+                post.self_like = True
+            else:
+                post.self_like = False
+            post.liked = len(post.liked)
+            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                              'ico', 'tif', 'tiff']:
+                post.file_type = "img"
+            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                post.file_type = "video"
+            else:
+                post.file_type = "None"
+            posts.append(post)
+    posts = list(reversed(posts))
+
+    form = NewPostForm()
+
+    if form.validate_on_submit():
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            file_path=None,
+            tegs=tegi,
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
+        )
+        db_sess.add(post)
+        db_sess.commit()
+
+        if form.file.data:
+            posts_all = db_sess.query(Post).all()
+            filename = secure_filename(form.file.data.filename)
+            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
+            form.file.data.save(file_path)
+            post.file_path = file_path
+            post.liked = []
+            post.orig_post = 0
+            post.count_reposts = 0
+            db_sess.commit()
+
+        return redirect('/')
+    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+
+
+def process_posts(posts_all):
+    posts = []
+    for post in posts_all:
+        post.avatar = get_avatar_by_user_id(post.author)
+        post.username = get_username_by_user_id(post.author)
+        post.author = get_name_by_user_id(post.author)
+        post.time = post.time.strftime("%d:%m:%Y %H:%M")
+        post.self_like = False
+        post.liked = len(post.liked)
+        if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                          'ico', 'tif', 'tiff']:
+            post.file_type = "img"
+        elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+            post.file_type = "video"
+        else:
+            post.file_type = "None"
+        posts.append(post)
+    return posts
 
 
 @app.route('/tegs_post/<teg>')
@@ -383,18 +488,18 @@ def edit_profile():
         file = form.avatar.data
         if file and allowed_file(file.filename):
             filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        img = Image.open(file)
-        # Обрезаем изображение до соотношения сторон 1:1
-        width, height = img.size
-        new_size = min(width, height)
-        left = (width - new_size) / 2
-        top = (height - new_size) / 2
-        right = (width + new_size) / 2
-        bottom = (height + new_size) / 2
-        img_cropped = img.crop((left, top, right, bottom))
-        # Сохраняем обрезанное изображение
-        img_cropped.save(filepath, 'PNG')
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            img = Image.open(file)
+            # Обрезаем изображение до соотношения сторон 1:1
+            width, height = img.size
+            new_size = min(width, height)
+            left = (width - new_size) / 2
+            top = (height - new_size) / 2
+            right = (width + new_size) / 2
+            bottom = (height + new_size) / 2
+            img_cropped = img.crop((left, top, right, bottom))
+            # Сохраняем обрезанное изображение
+            img_cropped.save(filepath, 'PNG')
 
         accaunt.avatar = "/" + filepath
         db_sess.commit()

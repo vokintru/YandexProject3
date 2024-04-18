@@ -1,7 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Болото</h1>
+<h1 class="no-margin">Болото</h1>
+<div class="page-switcher">
+    <a href="/all_posts" class="active">All Posts</a>
+    <a href="/subscriptions">Subscriptions</a>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Получаем текущий URL страницы
+        var currentUrl = window.location.pathname;
+
+        // Получаем все ссылки в блоке .page-switcher
+        var links = document.querySelectorAll(".page-switcher a");
+
+        // Проходимся по каждой ссылке
+        links.forEach(function(link) {
+            // Проверяем, соответствует ли атрибут href ссылки текущему URL
+            if (link.getAttribute("href") === currentUrl) {
+                // Если да, добавляем класс active
+                link.classList.add("active");
+            } else {
+                // Если нет, удаляем класс active
+                link.classList.remove("active");
+            }
+        });
+    });
+</script>
+<br>
 {% if current_user.is_authenticated %}
     <form id="myForm" action="" method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
