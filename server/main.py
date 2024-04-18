@@ -211,10 +211,18 @@ def tegs_post(teg):
     posts_all = db_sess.query(Post).all()
     posts = []
     for post in posts_all:
-        post.avatar = get_avatar_by_user_id(post.author)
+        post.avatar = "/" + get_avatar_by_user_id(post.author)
         post.username = get_username_by_user_id(post.author)
         post.author = get_name_by_user_id(post.author)
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
+        if current_user.is_authenticated:
+            if current_user.id in post.liked:
+                post.self_like = True
+            else:
+                post.self_like = False
+        else:
+            post.self_like = False
+        post.liked = len(post.liked)
         if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                           'ico', 'tif', 'tiff']:
             post.file_type = "img"
@@ -231,28 +239,28 @@ def tegs_post(teg):
     return render_template('tegs_posts.html', posts=posts)
 
 
-@app.route("/newpost", methods=['GET', 'POST'])
-def newpost():
-    form = NewPostForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-        db_sess.close()
-        return redirect('/')
-    return render_template('newpost.html', form=form)
+# @app.route("/newpost", methods=['GET', 'POST'])
+# def newpost():
+#     form = NewPostForm()
+#     if form.validate_on_submit():
+#         db_sess = db_session.create_session()
+#         tegi = []
+#         for i in form.text.data.split(' '):
+#             if '#' in i:
+#                 tegi.append(i)
+#         post = Post(
+#             author=current_user.id,
+#             text=form.text.data,
+#             tegs=tegi,
+#             liked=[],
+#             orig_post=0,
+#             count_reposts=0,
+#         )
+#         db_sess.add(post)
+#         db_sess.commit()
+#         db_sess.close()
+#         return redirect('/')
+#     return render_template('newpost.html', form=form)
 
 
 def find_orig_post(db_sess, orig_post):
@@ -269,6 +277,18 @@ def repost(orig_post):
     form = RepostForm()
     db_sess = db_session.create_session()
     orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
+    post = orig_db
+    post.avatar = get_avatar_by_user_id(post.author)
+    post.username = get_username_by_user_id(post.author)
+    post.author = get_name_by_user_id(post.author)
+    post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                      'ico', 'tif', 'tiff']:
+        post.file_type = "img"
+    elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+        post.file_type = "video"
+    else:
+        post.file_type = "None"
     if form.validate_on_submit():
         if orig_db.orig_post == 0:
             db_sess = db_session.create_session()
@@ -407,6 +427,14 @@ def profile(username):
             post.username = get_username_by_user_id(post.author)
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
+            if current_user.is_authenticated:
+                if current_user.id in post.liked:
+                    post.self_like = True
+                else:
+                    post.self_like = False
+            else:
+                post.self_like = False
+            post.liked = len(post.liked)
             if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                               'ico', 'tif', 'tiff']:
                 post.file_type = "img"
