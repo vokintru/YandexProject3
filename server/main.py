@@ -23,7 +23,9 @@ ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.get(User, user_id)
+    ret = db_sess.get(User, user_id)
+    db_sess.close()
+    return ret
 
 
 def allowed_file(filename):
@@ -34,6 +36,7 @@ def allowed_file(filename):
 def get_avatar_by_user_id(user_id):
     db_sess = db_session.create_session()
     user = db_sess.query(Account).filter(Account.id == user_id).first()
+    db_sess.close()
     if user:
         return user.avatar
     return None
@@ -43,6 +46,7 @@ def get_name_by_user_id(user_id):
     db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == user_id).first()
     user = db_sess.query(User).filter(User.id == user_id).first()
+    db_sess.close()
     if account:
         if account.name != user.username:
             return account.name
@@ -55,6 +59,7 @@ def get_username_by_user_id(user_id):
     db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == user_id).first()
     user = db_sess.query(User).filter(User.id == user_id).first()
+    db_sess.close()
     if account:
         return f"@{user.username}"
     return None
@@ -98,11 +103,12 @@ def all_posts():
             post.orig_post = 0
             post.count_reposts = 0
             db_sess.commit()
-
+            db_sess.close()
         return redirect('/')
     posts_all = db_sess.query(Post).all()
     posts = process_posts(posts_all)
     posts = list(reversed(posts))
+    db_sess.close()
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
 
@@ -139,9 +145,10 @@ def subscriptions():
             post.orig_post = 0
             post.count_reposts = 0
             db_sess.commit()
-
+        db_sess.close()
         return redirect('/')
     if not current_user.is_authenticated:
+        db_sess.close()
         return redirect('/login')  # Редирект на страницу входа, если пользователь не авторизован
 
     account = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -168,6 +175,7 @@ def subscriptions():
                 post.file_type = "None"
             posts.append(post)
     posts = list(reversed(posts))
+    db_sess.close()
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
 
@@ -213,6 +221,7 @@ def tegs_post(teg):
     posts = list(reversed(posts))
     # posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
     # posts = list(reversed(posts))
+    db_sess.close()
     return render_template('tegs_posts.html', posts=posts)
 
 
@@ -235,6 +244,7 @@ def newpost():
         )
         db_sess.add(post)
         db_sess.commit()
+        db_sess.close()
         return redirect('/')
     return render_template('newpost.html', form=form)
 
@@ -272,6 +282,7 @@ def repost(orig_post):
             orig_db.count_reposts += 1
             db_sess.add(post)
             db_sess.commit()
+            db_sess.close()
             return redirect('/')
         else:
             db_sess = db_session.create_session()
@@ -291,7 +302,9 @@ def repost(orig_post):
             orig_db.count_reposts += 1
             db_sess.add(post)
             db_sess.commit()
+            db_sess.close()
             return redirect('/')
+    db_sess.close()
     return render_template('repost.html', form=form, post=orig_db)
 
 
@@ -303,7 +316,9 @@ def login():
         user = db_sess.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            db_sess.close()
             return redirect("/")
+        db_sess.close()
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
@@ -352,6 +367,7 @@ def reqister():
         db_sess.add(user)
         db_sess.add(account)
         db_sess.commit()
+        db_sess.close()
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -394,6 +410,7 @@ def profile(username):
                 post.file_type = "None"
             posts.append(post)
     posts = list(reversed(posts))
+    db_sess.close()
     return render_template('profile.html', posts=posts, **params)
 
 
@@ -411,6 +428,7 @@ def follow(username, accid):
     f2.append(int(current_user.id))
     acc2.followers = list(set(f2))
     db_sess.commit()
+    db_sess.close()
     return redirect(f'/users/@{username}')
 
 
@@ -445,6 +463,7 @@ def edit_profile():
         accaunt.avatar = "/" + filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
+    db_sess.close()
     return render_template('edit_profile.html', title='Редактировать', form=form)
 
 
@@ -460,6 +479,7 @@ def unfollow(username, accid):
     f2.remove(int(current_user.id))
     acc2.followers = list(set(f2))
     db_sess.commit()
+    db_sess.close()
     return redirect(f'/users/@{username}')
 
 
@@ -472,6 +492,7 @@ def like(post_id):
     liked.append(acc.id)
     post.liked = list(set(liked))
     db_sess.commit()
+    db_sess.close()
     return redirect("/")
 
 
@@ -484,6 +505,7 @@ def unlike(post_id):
     liked.remove(int(acc.id))
     post.liked = list(set(liked))
     db_sess.commit()
+    db_sess.close()
     return redirect("/")
 
 
@@ -513,6 +535,7 @@ def api_v1_getuser():
             "followers": account.followers,
         }
     }
+    db_sess.close()
     return response
 
 
