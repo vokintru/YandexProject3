@@ -20,6 +20,7 @@ app.config['UPLOAD_FOLDER'] = 'static/content'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
+
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
