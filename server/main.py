@@ -201,7 +201,6 @@ def process_posts(posts_all):
             post.file_type = "video"
         else:
             post.file_type = "None"
-        print(post)
         posts.append(post)
     return posts
 
@@ -385,7 +384,7 @@ def reqister():
         account = Account(
             name=form.username.data,
             bio=f"Мы почти ничего не знаем о {form.username.data}, но мы уверены, что {form.username.data} — "
-                f"отличный человек.",
+                f"отличная жаба.",
             avatar=random.choice(default_avatars),
             followers=[],
             follow=[]
