@@ -2,7 +2,7 @@ import os
 import random
 
 from PIL import Image
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
 
@@ -60,75 +60,14 @@ def get_username_by_user_id(user_id):
     return None
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    db_sess = db_session.create_session()
-    form = NewPostForm()
-
-    if form.validate_on_submit():
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            file_path=None,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-
-        if form.file.data:
-            posts_all = db_sess.query(Post).all()
-            filename = secure_filename(form.file.data.filename)
-            file_id = f"file_{len(posts_all) + 1}_{filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
-            form.file.data.save(file_path)
-            post.file_path = file_path
-            post.liked = []
-            post.orig_post = 0
-            post.count_reposts = 0
-            db_sess.commit()
-
-        return redirect('/all_posts')
-
-    if current_user.is_authenticated:
-        return redirect('/all_posts')
-    else:
-        posts_all = db_sess.query(Post).all()
-        posts = []
-        for post in posts_all:
-            post.avatar = get_avatar_by_user_id(post.author)
-            post.username = get_username_by_user_id(post.author)
-            post.author = get_name_by_user_id(post.author)
-            post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            post.self_like = False
-            post.liked = len(post.liked)
-            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                              'ico', 'tif', 'tiff']:
-                post.file_type = "img"
-            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                post.file_type = "video"
-            else:
-                post.file_type = "None"
-            posts.append(post)
-
-    posts = list(reversed(posts))
-
-    return render_template('index.html', form=form, posts=posts, len=len)
+    return redirect('/all_posts')
 
 
 @app.route("/all_posts", methods=['GET', 'POST'])
 def all_posts():
     db_sess = db_session.create_session()
-    posts_all = db_sess.query(Post).all()
-    posts = process_posts(posts_all)
-    posts = list(reversed(posts))
-
     form = NewPostForm()
 
     if form.validate_on_submit():
@@ -151,7 +90,7 @@ def all_posts():
         if form.file.data:
             posts_all = db_sess.query(Post).all()
             filename = secure_filename(form.file.data.filename)
-            file_id = f"file_{len(posts_all) + 1}_{filename}"
+            file_id = f"file_{len(posts_all) + 1}.{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
             form.file.data.save(file_path)
             post.file_path = file_path
@@ -161,15 +100,50 @@ def all_posts():
             db_sess.commit()
 
         return redirect('/')
+    posts_all = db_sess.query(Post).all()
+    posts = process_posts(posts_all)
+    posts = list(reversed(posts))
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
 
 @app.route("/subscriptions", methods=['GET', 'POST'])
 def subscriptions():
+    db_sess = db_session.create_session()
+    form = NewPostForm()
+
+    if form.validate_on_submit():
+        tegi = []
+        for i in form.text.data.split(' '):
+            if '#' in i:
+                tegi.append(i)
+        post = Post(
+            author=current_user.id,
+            text=form.text.data,
+            file_path=None,
+            tegs=tegi,
+            liked=[],
+            orig_post=0,
+            count_reposts=0,
+        )
+        db_sess.add(post)
+        db_sess.commit()
+
+        if form.file.data:
+            posts_all = db_sess.query(Post).all()
+            filename = secure_filename(form.file.data.filename)
+            file_id = f"file_{len(posts_all) + 1}.{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
+            form.file.data.save(file_path)
+            post.file_path = file_path
+            post.liked = []
+            post.orig_post = 0
+            post.count_reposts = 0
+            db_sess.commit()
+
+        return redirect('/')
     if not current_user.is_authenticated:
         return redirect('/login')  # Редирект на страницу входа, если пользователь не авторизован
 
-    db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == current_user.id).first()
     follow = account.follow
     posts_all = db_sess.query(Post).all()
@@ -194,39 +168,6 @@ def subscriptions():
                 post.file_type = "None"
             posts.append(post)
     posts = list(reversed(posts))
-
-    form = NewPostForm()
-
-    if form.validate_on_submit():
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            file_path=None,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-
-        if form.file.data:
-            posts_all = db_sess.query(Post).all()
-            filename = secure_filename(form.file.data.filename)
-            file_id = f"file_{len(posts_all) + 1}_{filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
-            form.file.data.save(file_path)
-            post.file_path = file_path
-            post.liked = []
-            post.orig_post = 0
-            post.count_reposts = 0
-            db_sess.commit()
-
-        return redirect('/')
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
 
@@ -544,6 +485,35 @@ def unlike(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     return redirect("/")
+
+
+# ------------------------------------------------------(API)-----------------------------------------------------------
+
+@app.route('/api/v1/status', methods=['GET'])
+def api_v1_status():
+    return "200"
+
+
+@app.route('/api/v1/getuser', methods=['GET'])
+def api_v1_getuser():
+    db_sess = db_session.create_session()
+    username = request.args.get('username')
+    user = db_sess.query(User).filter(User.username == username).first()
+    account = db_sess.query(Account).filter(Account.id == user.id).first()
+    response = {
+        "user": {
+            "id": user.id,
+            "username": username,
+        },
+        "account": {
+            "id": account.id,
+            "username": username,
+            "name": account.name,
+            "bio": account.bio,
+            "followers": account.followers,
+        }
+    }
+    return response
 
 
 def main():
