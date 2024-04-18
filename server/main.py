@@ -20,7 +20,6 @@ app.config['UPLOAD_FOLDER'] = 'static/content'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
-
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
@@ -187,7 +186,13 @@ def process_posts(posts_all):
         post.username = get_username_by_user_id(post.author)
         post.author = get_name_by_user_id(post.author)
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
-        post.self_like = False
+        if current_user.is_authenticated:
+            if current_user.id in post.liked:
+                post.self_like = True
+            else:
+                post.self_like = False
+        else:
+            post.self_like = False
         post.liked = len(post.liked)
         if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                           'ico', 'tif', 'tiff']:
@@ -494,7 +499,7 @@ def like(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     db_sess.close()
-    return redirect("/")
+    return '200'
 
 
 @app.route('/unlike/<post_id>')
@@ -507,7 +512,7 @@ def unlike(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     db_sess.close()
-    return redirect("/")
+    return '200'
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------

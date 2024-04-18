@@ -62,6 +62,28 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 });
+function makeRequest(url) {
+    // Предотвращение стандартного поведения ссылки
+    event.preventDefault();
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            // Успешный ответ
+            console.log(xhr.responseText);
+        } else {
+            // Обработка ошибок
+            console.error('Произошла ошибка при выполнении запроса.');
+        }
+    };
+
+    xhr.send();
+    setTimeout(function() {
+        window.location.reload();
+    }, 10);
+}
 </script>
 
 </body>
