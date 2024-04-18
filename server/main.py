@@ -1,3 +1,4 @@
+from pickle import loads, dumps
 from flask import Flask, render_template, redirect
 from data import db_session
 from data.users import User, Account
@@ -5,10 +6,12 @@ from data.posts import Post
 from forms.user import RegisterForm, LoginForm, EditForm
 from forms.post import NewPostForm, RepostForm
 import random
+import datetime
 import os
 from PIL import Image
 from werkzeug.utils import secure_filename
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from sqlalchemy import func
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -380,20 +383,20 @@ def edit_profile():
         file = form.avatar.data
         if file and allowed_file(file.filename):
             filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            img = Image.open(file)
-            # Обрезаем изображение до соотношения сторон 1:1
-            width, height = img.size
-            new_size = min(width, height)
-            left = (width - new_size) / 2
-            top = (height - new_size) / 2
-            right = (width + new_size) / 2
-            bottom = (height + new_size) / 2
-            img_cropped = img.crop((left, top, right, bottom))
-            # Сохраняем обрезанное изображение
-            img_cropped.save(filepath, 'PNG')
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        img = Image.open(file)
+        # Обрезаем изображение до соотношения сторон 1:1
+        width, height = img.size
+        new_size = min(width, height)
+        left = (width - new_size) / 2
+        top = (height - new_size) / 2
+        right = (width + new_size) / 2
+        bottom = (height + new_size) / 2
+        img_cropped = img.crop((left, top, right, bottom))
+        # Сохраняем обрезанное изображение
+        img_cropped.save(filepath, 'PNG')
 
-            accaunt.avatar = "/" + filepath
+        accaunt.avatar = "/" + filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     return render_template('edit_profile.html', title='Редактировать', form=form)

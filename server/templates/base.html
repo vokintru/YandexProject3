@@ -7,9 +7,10 @@
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
-    <link href="../static/css/style.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/style.css" rel="stylesheet"/>
     {% block title %}
-    <title>{{title}}</title>
+    <title>Болото</title>
+    <link rel="icon" href="static\img\logo.ico" type="image/x-icon">
     {% endblock %}
 </head>
 <body>
@@ -25,13 +26,13 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <a class="dropdown-item" href="/users/@{{ current_user.username }}">Профиль</a>
-                    <a class="dropdown-item" href="/logout">Выход</a>
+                    <a class="dropdown-item" href="/logout">Уплыть</a>
                 </div>
             </div>
         {% else %}
             <p>
-                <a class="btn btn-primary" href="/register">Зарегистрироваться</a>
-                <a class="btn btn-success" href="/login">Войти</a>
+                <a class="btn btn-primary" href="/register">Новый жаб</a>
+                <a class="btn btn-success" href="/login">Старый жаб</a>
             </p>
         {% endif %}
     </nav>
@@ -62,5 +63,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
+<footer style="background-color: #212121; color: #ffffff; text-align: center;">
+    <div class="footer-bottom">
+        &copy; 2024 Болото. Все права защищены.
+        info@zhabki.ru
+    </div>
+</footer>
+
 </body>
 </html>
