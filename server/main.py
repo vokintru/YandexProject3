@@ -201,6 +201,7 @@ def process_posts(posts_all):
             post.file_type = "video"
         else:
             post.file_type = "None"
+        print(post)
         posts.append(post)
     return posts
 
@@ -393,6 +394,7 @@ def reqister():
         db_sess.add(user)
         db_sess.add(account)
         db_sess.commit()
+        login_user(user, remember=True)
         db_sess.close()
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
@@ -418,7 +420,6 @@ def profile(username):
     params['bio'] = account.bio
     params['folowers'] = len(account.followers)
     params['folow'] = len(account.follow)
-    print(current_user.is_authenticated)
     if current_user.is_authenticated:
         params['is_follow'] = int(current_user.id) in account.followers
     else:
@@ -498,7 +499,7 @@ def edit_profile():
             # Сохраняем обрезанное изображение
             img_cropped.save(filepath, 'PNG')
 
-        accaunt.avatar = "/" + filepath
+        accaunt.avatar = filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     db_sess.close()
