@@ -1,5 +1,4 @@
 import datetime
-
 import sqlalchemy
 from flask_login import UserMixin
 
@@ -24,4 +23,5 @@ class Post(SqlAlchemyBase, UserMixin):
     count_comments = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
 
     def __repr__(self):
-        return f'<Post> id: {self.id} author: {self.author} text: {self.text} file_path: {self.file_path} time: {self.time} liked: {self.liked} orig_post: {self.orig_post} count_reposts: {self.count_reposts}'
+        return f'<Post> id: {self.id} author: {self.author} text: {self.text} file_path: {self.file_path} ' \
+               f'time: {self.time} liked: {self.liked} orig_post: {self.orig_post} count_reposts: {self.count_reposts} '
