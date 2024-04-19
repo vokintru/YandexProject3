@@ -24,7 +24,7 @@ async def get_user(inter: disnake.ApplicationCommandInteraction, user: str):
 
 @bot.slash_command(name="del_post", description="Удаляется пост по id")
 async def get_user(inter: disnake.ApplicationCommandInteraction, postid: int):
-    url = f"http://127.0.0.1:5000/api/v1/delpost"
+    url = f"https://zhabki.ru/api/v1/delpost"
     response = requests.get(url, params={"postid": postid, "key": "boloto_p07G5n1W2E4f8Zq1Xc6T7yU"})
     if response.status_code == 200:
         data = response.text

@@ -158,7 +158,8 @@ def subscriptions():
         if post.author in follow or post.author == current_user.id:
             post.avatar = get_avatar_by_user_id(post.author)
             post.username = get_username_by_user_id(post.author)
-            post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
+            with db_sess.no_autoflush:
+                post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
             if current_user.id in post.liked:
@@ -203,7 +204,8 @@ def process_posts(posts_all):
     for post in posts_all:
         post.avatar = get_avatar_by_user_id(post.author)
         post.username = get_username_by_user_id(post.author)
-        post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
+        with db_sess.no_autoflush:
+            post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
         post.author = get_name_by_user_id(post.author)
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
         if current_user.is_authenticated:
