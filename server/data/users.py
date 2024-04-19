@@ -39,7 +39,8 @@ class Account(SqlAlchemyBase, UserMixin):
     followers = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     follow = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     posts = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    badges = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<Account> {self.id} {self.name} {self.bio} {self.avatar} {self.followers} {self.follow} {self.posts}'
+        return f'<Account> {self.id} {self.name} {self.bio} {self.avatar} {self.followers} {self.follow} {self.posts} {self.badges}'
 

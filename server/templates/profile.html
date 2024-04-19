@@ -29,7 +29,29 @@
             </div>
 
             <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-                <h3>{{name}}</h3>
+                <h3>
+                    {{name}}
+                    {% if badges != [] and badges != None %}
+                        {% if "verified-account" in badges %}
+                            <div class="badge-container">
+                              <img width="24" height="24" src="/static/img/badges/verified-account.png"/>
+                              <div class="popup" id="popup" style="font-size: 16px;">Подтверждённый аккаунт</div>
+                            </div>
+                        {% endif %}
+                        {% if "developer" in badges %}
+                            <div class="badge-container">
+                              <img width="24" height="24" src="/static/img/badges/developer.png" id="badge-developer"/>
+                              <div class="popup" id="popup" style="font-size: 16px;">Разработчик Болота</div>
+                            </div>
+                        {% endif %}
+                        {% if "betatest" in badges %}
+                            <div class="badge-container">
+                              <img width="24" height="24" src="/static/img/badges/betatest.png"/>
+                              <div class="popup" id="popup" style="font-size: 16px;">Учавствовал в бета тестировании</div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </h3>
                 <hr>
                 <p>{{bio}}</p>
             </div>
@@ -57,7 +79,28 @@
                         <div class="media">
                             <img src="/{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a></h5>
+                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a>
+                                {% if badges != [] and badges != None %}
+                                    {% if "verified-account" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/verified-account.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Подтверждённый аккаунт</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "developer" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/developer.png" id="badge-developer"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Разработчик Болота</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "betatest" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/betatest.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Учавствовал в бета тестировании</div>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                </h5>
                                 <hr>
                                 <p id="content">{{post.text}}</p>
                                 {% if post.file_path %}
@@ -114,13 +157,55 @@
                         <div class="media">
                             <img src="/{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a></h5>
+                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a>
+                                {% if badges != [] and badges != None %}
+                                    {% if "verified-account" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/verified-account.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Подтверждённый аккаунт</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "developer" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/developer.png" id="badge-developer"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Разработчик Болота</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "betatest" in badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/betatest.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Учавствовал в бета тестировании</div>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                </h5>
                                 <hr>
                                 <div class="post border rounded p-3 mb-3">
                                 <div class="media">
                             <img src="/{{posts_all[post.orig_post-1].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href="/users/{{posts_all[post.orig_post-1].username}}" style="color: #609041;">{{posts_all[post.orig_post-1].author}}</a></h5>
+                                <h5 class="mt-0"><a href="/users/{{posts_all[post.orig_post-1].username}}" style="color: #609041;">{{posts_all[post.orig_post-1].author}}</a>
+                                {% if post.badges != [] and post.badges != None %}
+                                    {% if "verified-account" in post.badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/verified-account.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Подтверждённый аккаунт</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "developer" in post.badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/developer.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Разработчик Болота</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if "betatest" in post.badges %}
+                                        <div class="badge-container">
+                                          <img width="24" height="24" src="/static/img/badges/betatest.png"/>
+                                          <div class="popup" id="popup" style="font-size: 16px;">Учавствовал в бета тестировании</div>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                </h5>
                                 <hr>
                                 <p id="content">{{posts_all[post.orig_post-1].text}}</p>
                                 {% if posts_all[post.orig_post-1].file_path %}

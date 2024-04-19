@@ -62,3 +62,34 @@ h1.no-margin {
     right: 0;
     left: auto;
 }
+.popup {
+  visibility: hidden;
+  width: 220px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 4px 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.popup::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0%;
+  margin-left: 5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #555 transparent;
+}
+
+.badge-container {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-container:hover .popup {
+  visibility: visible;
+}

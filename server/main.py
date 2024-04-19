@@ -158,6 +158,7 @@ def subscriptions():
         if post.author in follow or post.author == current_user.id:
             post.avatar = get_avatar_by_user_id(post.author)
             post.username = get_username_by_user_id(post.author)
+            post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
             if current_user.id in post.liked:
@@ -197,10 +198,12 @@ def follows():
 
 
 def process_posts(posts_all):
+    db_sess = db_session.create_session()
     posts = []
     for post in posts_all:
         post.avatar = get_avatar_by_user_id(post.author)
         post.username = get_username_by_user_id(post.author)
+        post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
         post.author = get_name_by_user_id(post.author)
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
         if current_user.is_authenticated:
@@ -219,6 +222,7 @@ def process_posts(posts_all):
         else:
             post.file_type = "None"
         posts.append(post)
+    db_sess.close()
     return posts
 
 
@@ -436,6 +440,7 @@ def profile(username):
     params['bio'] = account.bio
     params['folowers'] = len(account.followers)
     params['folow'] = len(account.follow)
+    params['badges'] = account.badges
     if current_user.is_authenticated:
         params['is_follow'] = int(current_user.id) in account.followers
     else:
@@ -444,6 +449,9 @@ def profile(username):
     posts = []
     for post in posts_all:
         if post.author == user.id:
+            if post.orig_post != 0:
+                with db_sess.no_autoflush:
+                    post.badges = db_sess.query(Account).filter(Account.name == db_sess.query(Post).filter(Post.id == post.orig_post).first().author[1:]).first().badges
             post.avatar = get_avatar_by_user_id(post.author)
             post.username = get_username_by_user_id(post.author)
             post.author = get_name_by_user_id(post.author)
