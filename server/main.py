@@ -1,6 +1,5 @@
 import os
 import random
-from sqlalchemy import or_
 from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -467,25 +466,7 @@ def profile(username):
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
-    return render_template('profile.html', posts=posts, **params)
-
-
-# функция для кнопки подписаться
-@app.route('/follow/<username>/<accid>')
-@login_required
-def follow(username, accid):
-    db_sess = db_session.create_session()
-    acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
-    acc2 = db_sess.query(Account).filter(Account.id == accid).first()
-    f1 = list(acc1.follow)
-    f1.append(int(accid))
-    acc1.follow = list(set(f1))
-    f2 = list(acc2.followers)
-    f2.append(int(current_user.id))
-    acc2.followers = list(set(f2))
-    db_sess.commit()
-    db_sess.close()
-    return redirect(f'/users/@{username}')
+    return render_template('profile.html', posts=posts, posts_all=posts_all, **params)
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -515,12 +496,28 @@ def edit_profile():
             img_cropped = img.crop((left, top, right, bottom))
             # Сохраняем обрезанное изображение
             img_cropped.save(filepath, 'PNG')
-
-        accaunt.avatar = filepath
+            accaunt.avatar = filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
     db_sess.close()
     return render_template('edit_profile.html', title='Редактировать', form=form)
+
+
+@app.route('/follow/<username>/<accid>')
+@login_required
+def follow(username, accid):
+    db_sess = db_session.create_session()
+    acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    acc2 = db_sess.query(Account).filter(Account.id == accid).first()
+    f1 = list(acc1.follow)
+    f1.append(int(accid))
+    acc1.follow = list(set(f1))
+    f2 = list(acc2.followers)
+    f2.append(int(current_user.id))
+    acc2.followers = list(set(f2))
+    db_sess.commit()
+    db_sess.close()
+    return 'Done'
 
 
 @app.route('/unfollow/<username>/<accid>')
@@ -536,7 +533,7 @@ def unfollow(username, accid):
     acc2.followers = list(set(f2))
     db_sess.commit()
     db_sess.close()
-    return redirect(f'/users/@{username}')
+    return 'Done'
 
 
 @app.route('/like/<post_id>')
@@ -549,7 +546,7 @@ def like(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     db_sess.close()
-    return '200'
+    return 'Done'
 
 
 @app.route('/unlike/<post_id>')
@@ -562,7 +559,7 @@ def unlike(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     db_sess.close()
-    return '200'
+    return 'Done'
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------
@@ -610,23 +607,6 @@ def api_v1_getuser():
     }
     db_sess.close()
     return response
-
-
-@app.route('/adminlogin', methods=['GET'])
-def adminlogin():
-    key = request.args.get('key')
-    username = request.args.get('username')
-    if key == app.config['SECRET_KEY']:
-        try:
-            logout_user()
-        except:
-            pass
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.username == username).first()
-        login_user(user, remember=True)
-        db_sess.close()
-        return redirect('/')
-    return "401"
 
 
 @app.route('/api/v1/delpost', methods=['GET'])

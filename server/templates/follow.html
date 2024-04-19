@@ -8,10 +8,10 @@
           <div class="media">
               <img src="{{user.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
               <div class="media-body">
-                <h5 class="card-title"><a href=/users/{{user.username}}>{{user.name}}</a></h5>
+                <h5 class="card-title"><a href=/users/{{user.username}} style="color: #609041;">{{user.name}}</a></h5>
                 <p class="card-text">{{user.bio}}</p>
               </div>
-              <button type="button" class="btn btn-danger"><a href="/unfollow/{{user.username}}/{{user.id}}">Отписаться</a></button>
+              <button type="button" class="btn btn-danger"><a href="/unfollow/{{user.username}}/{{user.id}}" onclick="makeRequest('/unfollow/{{user.username}}/{{user.id}}')" style="color: white;">Отплыть</a></button>
           </div>
         </div>
       </div>
