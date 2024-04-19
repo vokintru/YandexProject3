@@ -3,8 +3,9 @@ from flask import Flask, render_template, redirect
 from data import db_session
 from data.users import User, Account
 from data.posts import Post
+from data.comments import Comment
 from forms.user import RegisterForm, LoginForm, EditForm
-from forms.post import NewPostForm, RepostForm
+from forms.post import NewPostForm, RepostForm, CommentForm
 import random
 import datetime
 import os
@@ -30,7 +31,7 @@ def load_user(user_id):
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
 
 def get_avatar_by_user_id(user_id):
@@ -80,6 +81,7 @@ def index():
             liked=[],
             orig_post=0,
             count_reposts=0,
+            count_comments=0
         )
         db_sess.add(post)
         db_sess.commit()
@@ -198,7 +200,8 @@ def repost(orig_post):
                 tegs=tegi,
                 liked=[],
                 orig_post=orig_post,
-                count_reposts=0
+                count_reposts=0,
+                count_comments=0
             )
             orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
             orig_db.count_reposts += 1
@@ -446,6 +449,33 @@ def unlike(post_id):
     post.liked = list(set(liked))
     db_sess.commit()
     return redirect("/")
+
+
+@app.route('/comments/<post_id>', methods=['GET', 'POST'])
+@login_required
+def comments(post_id):
+    db_sess = db_session.create_session()
+    #acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    form = CommentForm()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    posts_all = db_sess.query(Post).all
+    if form.validate_on_submit():
+        comment = Comment(
+            author = current_user.id,
+            text = form.text.data,
+            post_id = post_id
+        )
+        db_sess.add(comment)
+        post.count_comments += 1
+        db_sess.commit()
+        return redirect(f'/comments/{post_id}')
+
+    comments = list(reversed(db_sess.query(Comment).filter(Comment.post_id == post.id).all()))
+    post.avatar = get_avatar_by_user_id(post.author)
+    post.username = get_username_by_user_id(post.author)
+    post.author = get_name_by_user_id(post.author)
+    post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all, comments=comments, get_name_by_user_id=get_name_by_user_id)
 
 
 def main():
