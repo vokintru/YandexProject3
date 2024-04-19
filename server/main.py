@@ -15,10 +15,9 @@ from forms.user import RegisterForm, LoginForm, EditForm
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
+app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU'
 app.config['UPLOAD_FOLDER'] = 'static/content'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
-
 
 
 @login_manager.user_loader
@@ -226,28 +225,28 @@ def tegs_post(teg):
     return render_template('tegs_posts.html', posts=posts)
 
 
-@app.route("/newpost", methods=['GET', 'POST'])
-def newpost():
-    form = NewPostForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-        db_sess.close()
-        return redirect('/')
-    return render_template('newpost.html', form=form)
+# @app.route("/newpost", methods=['GET', 'POST'])
+# def newpost():
+#     form = NewPostForm()
+#     if form.validate_on_submit():
+#         db_sess = db_session.create_session()
+#         tegi = []
+#         for i in form.text.data.split(' '):
+#             if '#' in i:
+#                 tegi.append(i)
+#         post = Post(
+#             author=current_user.id,
+#             text=form.text.data,
+#             tegs=tegi,
+#             liked=[],
+#             orig_post=0,
+#             count_reposts=0,
+#         )
+#         db_sess.add(post)
+#         db_sess.commit()
+#         db_sess.close()
+#         return redirect('/')
+#     return render_template('newpost.html', form=form)
 
 
 def find_orig_post(db_sess, orig_post):
@@ -538,6 +537,41 @@ def api_v1_getuser():
     }
     db_sess.close()
     return response
+
+
+@app.route('/adminlogin', methods=['GET'])
+def adminlogin():
+    key = request.args.get('key')
+    username = request.args.get('username')
+    if key == app.config['SECRET_KEY']:
+        try:
+            logout_user()
+        except:
+            pass
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        login_user(user, remember=True)
+        db_sess.close()
+        return redirect('/')
+    return "401"
+
+
+@app.route('/api/v1/delpost', methods=['GET'])
+def api_v1_delpost():
+    key = request.args.get('key')
+    postid = request.args.get('postid')
+    if key == app.config['SECRET_KEY']:
+        db_sess = db_session.create_session()
+        post = db_sess.query(Post).filter(Post.id == int(postid)).first()
+        if post:
+            db_sess.delete(post)
+            db_sess.commit()
+            db_sess.close()
+            return "Done"
+        else:
+            db_sess.close()
+            return "Post wasn't found"
+    return "401"
 
 
 def main():
