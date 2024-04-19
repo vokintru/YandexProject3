@@ -1,6 +1,6 @@
 import os
 import random
-
+from sqlalchemy import or_
 from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -177,6 +177,24 @@ def subscriptions():
     posts = list(reversed(posts))
     db_sess.close()
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+
+
+@app.route("/follows", methods=['GET', 'POST'])
+def follows():
+    db_sess = db_session.create_session()
+    if not current_user.is_authenticated:
+        db_sess.close()
+        return redirect('/login')
+
+    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    follows_all = db_sess.query(Account).filter(Account.id.in_(account.follow)).all()
+    follows_new = []
+    for follow in follows_all:
+        follow.avatar = get_avatar_by_user_id(follow.id)
+        follow.username = get_username_by_user_id(follow.id)
+        follows_new.append(follow)
+    db_sess.close()
+    return render_template('follow.html', follows=follows_new)
 
 
 def process_posts(posts_all):

@@ -4,20 +4,17 @@
   <h1>Ваши камыши</h1>
   {% for user in follows %}
       <div class="card">
-        <div class="card-header">
-          {user.name}
-        </div>
         <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <img src="{user.avatar}" alt="Аватар" class="img-fluid">
-            </div>
-            <div class="col-md-8">
-              <h5 class="card-title">{user.username}</h5>
-              <p class="card-text">{user.bio}</p>
-            </div>
+          <div class="media">
+              <img src="{{user.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+              <div class="media-body">
+                <h5 class="card-title"><a href=/users/{{user.username}}>{{user.name}}</a></h5>
+                <p class="card-text">{{user.bio}}</p>
+              </div>
+              <button type="button" class="btn btn-danger"><a href="/unfollow/{{user.username}}/{{user.id}}">Отписаться</a></button>
           </div>
         </div>
       </div>
+      <br>
   {% endfor %}
 {% endblock %}
