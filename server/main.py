@@ -1,6 +1,6 @@
 import os
 import random
-
+from sqlalchemy import or_
 from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -15,7 +15,7 @@ from forms.user import RegisterForm, LoginForm, EditForm
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
+app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU'
 app.config['UPLOAD_FOLDER'] = 'static/content'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
@@ -177,6 +177,24 @@ def subscriptions():
     posts = list(reversed(posts))
     db_sess.close()
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+
+
+@app.route("/follows", methods=['GET', 'POST'])
+def follows():
+    db_sess = db_session.create_session()
+    if not current_user.is_authenticated:
+        db_sess.close()
+        return redirect('/login')
+
+    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    follows_all = db_sess.query(Account).filter(Account.id.in_(account.follow)).all()
+    follows_new = []
+    for follow in follows_all:
+        follow.avatar = get_avatar_by_user_id(follow.id)
+        follow.username = get_username_by_user_id(follow.id)
+        follows_new.append(follow)
+    db_sess.close()
+    return render_template('follow.html', follows=follows_new)
 
 
 def process_posts(posts_all):
@@ -592,6 +610,41 @@ def api_v1_getuser():
     }
     db_sess.close()
     return response
+
+
+@app.route('/adminlogin', methods=['GET'])
+def adminlogin():
+    key = request.args.get('key')
+    username = request.args.get('username')
+    if key == app.config['SECRET_KEY']:
+        try:
+            logout_user()
+        except:
+            pass
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.username == username).first()
+        login_user(user, remember=True)
+        db_sess.close()
+        return redirect('/')
+    return "401"
+
+
+@app.route('/api/v1/delpost', methods=['GET'])
+def api_v1_delpost():
+    key = request.args.get('key')
+    postid = request.args.get('postid')
+    if key == app.config['SECRET_KEY']:
+        db_sess = db_session.create_session()
+        post = db_sess.query(Post).filter(Post.id == int(postid)).first()
+        if post:
+            db_sess.delete(post)
+            db_sess.commit()
+            db_sess.close()
+            return "Done"
+        else:
+            db_sess.close()
+            return "Post wasn't found"
+    return "401"
 
 
 def main():
