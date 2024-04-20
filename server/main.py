@@ -3,6 +3,7 @@ from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
+import re
 from data import db_session
 from data.posts import Post
 from data.users import User, Account
@@ -76,7 +77,6 @@ def get_user_id_by_username(username, sobaka):
     db_sess = db_session.create_session()
     if sobaka:
         username = username[1:]
-    print(username)
     account = db_sess.query(Account).filter(Account.name == username).first()
     db_sess.close()
     if account:
@@ -602,9 +602,17 @@ def comments(post_id):
     post.username = get_username_by_user_id(post.author)
     post.author = get_name_by_user_id(post.author)
     post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    orig_post_avatar = ""
+    if post.orig_post != 0:
+        with db_sess.no_autoflush:
+            post.orig_post = db_sess.query(Post).filter(Post.id == post.orig_post).first()
+            orig_post_avatar = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().avatar
+            post.orig_post.username = "@" + db_sess.query(User).filter(User.id == post.orig_post.author).first().username
+            post.orig_post.name = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().name
     db_sess.close()
     return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all,
-                           comments=comments, get_name_by_user_id=get_name_by_user_id)
+                           comments=comments, get_name_by_user_id=get_name_by_user_id,
+                           orig_post_avatar=orig_post_avatar)
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------

@@ -37,15 +37,15 @@
                                 <hr>
                                 <div class="post border rounded p-3 mb-3">
                                 <div class="media">
-                            <img src="/{{posts_all[post.orig_post].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                            <img src="/{{orig_post_avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href=/users/{{posts_all[post.orig_post].username}}>{{posts_all[post.orig_post].author}}</a></h5>
+                                <h5 class="mt-0"><a href=/users/{{post.orig_post.username}}>{{post.orig_post.username}}</a></h5>
                                 <hr>
-                                <p id="content">{{posts_all[post.orig_post].text}}</p>
-                                {% if posts_all[post.orig_post].file_path %}
-                                    {% if [post.orig_post].file_type == "img" %}
+                                <p id="content">{{post.orig_post.text}}</p>
+                                {% if post.orig_post.file_path %}
+                                    {% if post.orig_post.file_type == "img" %}
                                         <img src="/{{posts_all[post.orig_post].file_path}}" style="width: 550px; height: auto;">
-                                    {% elif posts_all[post.orig_post].file_type == "video" %}
+                                    {% elif post.orig_post.file_type == "video" %}
                                         <video controls width="550">
                                           <source src=/{{posts_all[post.orig_post].file_path}} />
                                         </video>
@@ -53,7 +53,7 @@
                                         <p><a href=/{{posts_all[post.orig_post].file_path}}>Скачать файл</a></p>
                                     {% endif %}
                                 {% endif %}
-                                <p class="post-date" style="color: grey; font-size: smaller;">{{posts_all[post.orig_post].time}}</p>
+                                <p class="post-date" style="color: grey; font-size: smaller;">{{post.orig_post.time}}</p>
                             </div>
                         </div>
                                 </div>
