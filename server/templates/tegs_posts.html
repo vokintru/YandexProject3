@@ -4,7 +4,7 @@
 <br><br>
     <ul>
         {% for post in posts %}
-            <div class="post border rounded p-3 mb-3">
+            <div class="post border rounded p-3 mb-3 position-relative">
                 <div class="media">
                     <img src={{post.avatar}} class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                     <div class="media-body">
@@ -24,6 +24,13 @@
                         {% endif %}
                         <p class="post-date" style="color: grey; font-size: smaller;">{{post.time}}</p>
                     </div>
+                    <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+                      ...
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                      <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+                      <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
+                    </ul>
                 </div>
             </div>
             <br>
