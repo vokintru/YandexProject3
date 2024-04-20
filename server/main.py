@@ -1,10 +1,8 @@
 import os
-import random
 from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-from pickle import loads, dumps
 from data import db_session
 from data.posts import Post
 from data.users import User, Account
@@ -12,7 +10,6 @@ from data.comments import Comment
 from forms.post import NewPostForm, RepostForm, CommentForm
 from forms.user import RegisterForm, LoginForm, EditForm
 import random
-import datetime
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -459,7 +456,9 @@ def profile(username):
         if post.author == user.id:
             if post.orig_post != 0:
                 with db_sess.no_autoflush:
-                    post.badges = db_sess.query(Account).filter(Account.name == db_sess.query(Post).filter(Post.id == post.orig_post).first().author[1:]).first().badges
+                    post.badges = db_sess.query(Account).filter(
+                        Account.name == db_sess.query(Post).filter(Post.id == post.orig_post).first().author[
+                                        1:]).first().badges
             post.avatar = get_avatar_by_user_id(post.author)
             post.username = get_username_by_user_id(post.author)
             post.author = get_name_by_user_id(post.author)
@@ -580,8 +579,8 @@ def unlike(post_id):
     db_sess.close()
     return 'Done'
 
+
 @app.route('/comments/<post_id>', methods=['GET', 'POST'])
-@login_required
 def comments(post_id):
     db_sess = db_session.create_session()
     # acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -597,13 +596,20 @@ def comments(post_id):
         db_sess.add(comment)
         post.count_comments += 1
         db_sess.commit()
+        db_sess.close()
         return redirect(f'/comments/{post_id}')
 
     comments = list(reversed(db_sess.query(Comment).filter(Comment.post_id == post.id).all()))
+    for comment in comments:
+        comment.avatar = get_avatar_by_user_id(comment.author)
+        comment.username = get_username_by_user_id(comment.author)
     post.avatar = get_avatar_by_user_id(post.author)
     post.username = get_username_by_user_id(post.author)
     post.author = get_name_by_user_id(post.author)
     post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    db_sess.close()
+    return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all,
+                           comments=comments, get_name_by_user_id=get_name_by_user_id)
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------

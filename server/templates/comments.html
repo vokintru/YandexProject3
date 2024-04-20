@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+<br>
 {% if post.orig_post == 0 %}
                     <div class="post border rounded p-3 mb-3">
                         <div class="media">
-                            <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                            <img src="/{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
                                 <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                                 <hr>
@@ -30,13 +31,13 @@
                 {% else %}
                     <div class="post border rounded p-3 mb-3">
                         <div class="media">
-                            <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                            <img src="/{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
                                 <h5 class="mt-0"><a href=/users/{{post.username}}>{{post.author}}</a></h5>
                                 <hr>
                                 <div class="post border rounded p-3 mb-3">
                                 <div class="media">
-                            <img src="{{posts_all[post.orig_post].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
+                            <img src="/{{posts_all[post.orig_post].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
                                 <h5 class="mt-0"><a href=/users/{{posts_all[post.orig_post].username}}>{{posts_all[post.orig_post].author}}</a></h5>
                                 <hr>
@@ -65,7 +66,9 @@
 
                     <br>
 {% endif %}
-<form action="" method="post">
+<h4 style="text-align: center; margin-bottom: 40px">Комментарии</h4>
+{% if current_user.is_authenticated %}
+    <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>
             {{ form.text.label }}<br>
@@ -79,10 +82,12 @@
         <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
         <div>{{ message }}</div>
     </form>
-<h3 style="text-align: center; margin-bottom: 40px">Комментарии</h3>
+    <hr>
+{% endif %}
 {% for comment in comments %}
     <div class="post border rounded p-3 mb-3">
         <div class="media">
+            <img src="/{{comment.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
             <div class="media-body">
                 <h5 class="mt-0"><a href=/users/{{comment.username}}>{{get_name_by_user_id(comment.author)}}</a></h5>
                                 <hr>

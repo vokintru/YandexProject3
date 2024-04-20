@@ -38,7 +38,6 @@ class Account(SqlAlchemyBase, UserMixin):
     avatar = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     followers = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     follow = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
-    posts = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     badges = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):

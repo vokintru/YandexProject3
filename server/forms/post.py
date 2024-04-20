@@ -16,4 +16,4 @@ class RepostForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     text = TextAreaField('Комментарий', validators=[DataRequired()])
-    submit = SubmitField('отправить')
+    submit = SubmitField('Квакнуть')
