@@ -33,32 +33,3 @@ h1 {
   transition: color 0.3s ease-in;
 }
 
-.page-switcher {
-    display: flex;
-}
-
-.page-switcher a {
-    padding: 4px;
-    text-decoration: none;
-    color: #000;
-    border-radius: 5px 5px 5px 5px;
-}
-
-.page-switcher a.active {
-    background-color: #007bff;
-    color: #fff;
-}
-
-h1.no-margin {
-    margin-bottom: 0;
-}
-
-.post-actions {
-    position: absolute;
-    bottom: 5px;
-    right: 25px;
-}
-.dropdown-menu {
-    right: 0;
-    left: auto;
-}

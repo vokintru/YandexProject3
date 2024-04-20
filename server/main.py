@@ -1,31 +1,32 @@
-import os
-import random
-from sqlalchemy import or_
-from PIL import Image
-from flask import Flask, render_template, redirect, request
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from werkzeug.utils import secure_filename
-
+from pickle import loads, dumps
+from flask import Flask, render_template, redirect
 from data import db_session
-from data.posts import Post
 from data.users import User, Account
-from forms.post import NewPostForm, RepostForm
+from data.posts import Post
+from data.comments import Comment
 from forms.user import RegisterForm, LoginForm, EditForm
+from forms.post import NewPostForm, RepostForm, CommentForm
+import random
+import datetime
+import os
+from PIL import Image
+from werkzeug.utils import secure_filename
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from sqlalchemy import func
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU'
+app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU_220'
 app.config['UPLOAD_FOLDER'] = 'static/content'
+app.config['UPLOAD_FOLDER_AVATAR'] = 'static/img/users_avatars'
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    ret = db_sess.get(User, user_id)
-    db_sess.close()
-    return ret
+    return db_sess.get(User, user_id)
 
 
 def allowed_file(filename):
@@ -36,7 +37,6 @@ def allowed_file(filename):
 def get_avatar_by_user_id(user_id):
     db_sess = db_session.create_session()
     user = db_sess.query(Account).filter(Account.id == user_id).first()
-    db_sess.close()
     if user:
         return user.avatar
     return None
@@ -46,7 +46,6 @@ def get_name_by_user_id(user_id):
     db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == user_id).first()
     user = db_sess.query(User).filter(User.id == user_id).first()
-    db_sess.close()
     if account:
         if account.name != user.username:
             return account.name
@@ -59,19 +58,13 @@ def get_username_by_user_id(user_id):
     db_sess = db_session.create_session()
     account = db_sess.query(Account).filter(Account.id == user_id).first()
     user = db_sess.query(User).filter(User.id == user_id).first()
-    db_sess.close()
     if account:
         return f"@{user.username}"
     return None
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
-    return redirect('/all_posts')
-
-
-@app.route("/all_posts", methods=['GET', 'POST'])
-def all_posts():
     db_sess = db_session.create_session()
     form = NewPostForm()
 
@@ -88,6 +81,7 @@ def all_posts():
             liked=[],
             orig_post=0,
             count_reposts=0,
+            count_comments=0
         )
         db_sess.add(post)
         db_sess.commit()
@@ -103,68 +97,42 @@ def all_posts():
             post.orig_post = 0
             post.count_reposts = 0
             db_sess.commit()
-            db_sess.close()
+
         return redirect('/')
-    posts_all = db_sess.query(Post).all()
-    posts = process_posts(posts_all)
-    posts = list(reversed(posts))
-    db_sess.close()
-    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
-
-@app.route("/subscriptions", methods=['GET', 'POST'])
-def subscriptions():
-    db_sess = db_session.create_session()
-    form = NewPostForm()
-
-    if form.validate_on_submit():
-        tegi = []
-        for i in form.text.data.split(' '):
-            if '#' in i:
-                tegi.append(i)
-        post = Post(
-            author=current_user.id,
-            text=form.text.data,
-            file_path=None,
-            tegs=tegi,
-            liked=[],
-            orig_post=0,
-            count_reposts=0,
-        )
-        db_sess.add(post)
-        db_sess.commit()
-
-        if form.file.data:
-            posts_all = db_sess.query(Post).all()
-            filename = secure_filename(form.file.data.filename)
-            file_id = f"file_{len(posts_all) + 1}.{filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
-            form.file.data.save(file_path)
-            post.file_path = file_path
-            post.liked = []
-            post.orig_post = 0
-            post.count_reposts = 0
-            db_sess.commit()
-        db_sess.close()
-        return redirect('/')
-    if not current_user.is_authenticated:
-        db_sess.close()
-        return redirect('/login')  # Редирект на страницу входа, если пользователь не авторизован
-
-    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
-    follow = account.follow
-    posts_all = db_sess.query(Post).all()
-    posts = []
-    for post in posts_all:
-        if post.author in follow or post.author == current_user.id:
+    if current_user.is_authenticated:
+        account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+        follow = account.follow
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author in follow or post.author == current_user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if current_user.id in post.liked:
+                    post.self_like = True
+                else:
+                    post.self_like = False
+                post.liked = len(post.liked)
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
+                posts.append(post)
+    else:
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
             post.avatar = get_avatar_by_user_id(post.author)
             post.username = get_username_by_user_id(post.author)
             post.author = get_name_by_user_id(post.author)
             post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            if current_user.id in post.liked:
-                post.self_like = True
-            else:
-                post.self_like = False
+            post.self_like = False
             post.liked = len(post.liked)
             if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                               'ico', 'tif', 'tiff']:
@@ -174,53 +142,9 @@ def subscriptions():
             else:
                 post.file_type = "None"
             posts.append(post)
+
     posts = list(reversed(posts))
-    db_sess.close()
-    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
-
-
-@app.route("/follows", methods=['GET', 'POST'])
-def follows():
-    db_sess = db_session.create_session()
-    if not current_user.is_authenticated:
-        db_sess.close()
-        return redirect('/login')
-
-    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
-    follows_all = db_sess.query(Account).filter(Account.id.in_(account.follow)).all()
-    follows_new = []
-    for follow in follows_all:
-        follow.avatar = get_avatar_by_user_id(follow.id)
-        follow.username = get_username_by_user_id(follow.id)
-        follows_new.append(follow)
-    db_sess.close()
-    return render_template('follow.html', follows=follows_new)
-
-
-def process_posts(posts_all):
-    posts = []
-    for post in posts_all:
-        post.avatar = get_avatar_by_user_id(post.author)
-        post.username = get_username_by_user_id(post.author)
-        post.author = get_name_by_user_id(post.author)
-        post.time = post.time.strftime("%d:%m:%Y %H:%M")
-        if current_user.is_authenticated:
-            if current_user.id in post.liked:
-                post.self_like = True
-            else:
-                post.self_like = False
-        else:
-            post.self_like = False
-        post.liked = len(post.liked)
-        if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                          'ico', 'tif', 'tiff']:
-            post.file_type = "img"
-        elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-            post.file_type = "video"
-        else:
-            post.file_type = "None"
-        posts.append(post)
-    return posts
+    return render_template('index.html', form=form, posts=posts, len=len, posts_all=posts_all)
 
 
 @app.route('/tegs_post/<teg>')
@@ -229,18 +153,10 @@ def tegs_post(teg):
     posts_all = db_sess.query(Post).all()
     posts = []
     for post in posts_all:
-        post.avatar = "/" + get_avatar_by_user_id(post.author)
+        post.avatar = get_avatar_by_user_id(post.author)
         post.username = get_username_by_user_id(post.author)
         post.author = get_name_by_user_id(post.author)
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
-        if current_user.is_authenticated:
-            if current_user.id in post.liked:
-                post.self_like = True
-            else:
-                post.self_like = False
-        else:
-            post.self_like = False
-        post.liked = len(post.liked)
         if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
                                                           'ico', 'tif', 'tiff']:
             post.file_type = "img"
@@ -253,32 +169,7 @@ def tegs_post(teg):
     posts = list(reversed(posts))
     # posts = db_sess.query(Post).filter(func.json_contains(Post.tegs, X) == 1).all()
     # posts = list(reversed(posts))
-    db_sess.close()
     return render_template('tegs_posts.html', posts=posts)
-
-
-# @app.route("/newpost", methods=['GET', 'POST'])
-# def newpost():
-#     form = NewPostForm()
-#     if form.validate_on_submit():
-#         db_sess = db_session.create_session()
-#         tegi = []
-#         for i in form.text.data.split(' '):
-#             if '#' in i:
-#                 tegi.append(i)
-#         post = Post(
-#             author=current_user.id,
-#             text=form.text.data,
-#             tegs=tegi,
-#             liked=[],
-#             orig_post=0,
-#             count_reposts=0,
-#         )
-#         db_sess.add(post)
-#         db_sess.commit()
-#         db_sess.close()
-#         return redirect('/')
-#     return render_template('newpost.html', form=form)
 
 
 def find_orig_post(db_sess, orig_post):
@@ -291,22 +182,11 @@ def find_orig_post(db_sess, orig_post):
 
 
 @app.route("/repost/<orig_post>", methods=['GET', 'POST'])
+@login_required
 def repost(orig_post):
     form = RepostForm()
     db_sess = db_session.create_session()
     orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
-    post = orig_db
-    post.avatar = get_avatar_by_user_id(post.author)
-    post.username = get_username_by_user_id(post.author)
-    post.author = get_name_by_user_id(post.author)
-    post.time = post.time.strftime("%d:%m:%Y %H:%M")
-    if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                      'ico', 'tif', 'tiff']:
-        post.file_type = "img"
-    elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-        post.file_type = "video"
-    else:
-        post.file_type = "None"
     if form.validate_on_submit():
         if orig_db.orig_post == 0:
             db_sess = db_session.create_session()
@@ -320,17 +200,21 @@ def repost(orig_post):
                 tegs=tegi,
                 liked=[],
                 orig_post=orig_post,
-                count_reposts=0
+                count_reposts=0,
+                count_comments=0
             )
             orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
             orig_db.count_reposts += 1
             db_sess.add(post)
             db_sess.commit()
-            db_sess.close()
             return redirect('/')
         else:
             db_sess = db_session.create_session()
-            orig_db = find_orig_post(db_sess, orig_db)
+            while True:
+                if orig_db.orig_post == 0:
+                    break
+                else:
+                    orig_db = db_sess.query(Post).filter(Post.id == orig_db.orig_post).first()
             tegi = []
             for i in form.text.data.split(' '):
                 if '#' in i:
@@ -346,9 +230,12 @@ def repost(orig_post):
             orig_db.count_reposts += 1
             db_sess.add(post)
             db_sess.commit()
-            db_sess.close()
             return redirect('/')
-    db_sess.close()
+    orig_db.avatar = get_avatar_by_user_id(orig_db.author)
+    orig_db.username = get_username_by_user_id(orig_db.author)
+    orig_db.author = get_name_by_user_id(orig_db.author)
+    orig_db.time = orig_db.time.strftime("%d:%m:%Y %H:%M")
+    print(orig_db)
     return render_template('repost.html', form=form, post=orig_db)
 
 
@@ -360,9 +247,7 @@ def login():
         user = db_sess.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            db_sess.close()
             return redirect("/")
-        db_sess.close()
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
@@ -412,7 +297,6 @@ def reqister():
         db_sess.add(account)
         db_sess.commit()
         login_user(user, remember=True)
-        db_sess.close()
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -429,44 +313,48 @@ def profile(username):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.username == username).first()
     account = db_sess.query(Account).filter(Account.id == user.id).first()
-    params = {}
-    params['accid'] = account.id
-    params['username'] = username
-    params['name'] = account.name
-    params['avatar'] = account.avatar
-    params['bio'] = account.bio
-    params['folowers'] = len(account.followers)
-    params['folow'] = len(account.follow)
     if current_user.is_authenticated:
-        params['is_follow'] = int(current_user.id) in account.followers
-    else:
-        params['is_follow'] = False
-    posts_all = db_sess.query(Post).all()
-    posts = []
-    for post in posts_all:
-        if post.author == user.id:
-            post.avatar = get_avatar_by_user_id(post.author)
-            post.username = get_username_by_user_id(post.author)
-            post.author = get_name_by_user_id(post.author)
-            post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            if current_user.is_authenticated:
-                if current_user.id in post.liked:
-                    post.self_like = True
+        params = {'accid': account.id, 'username': username, 'name': account.name, 'avatar': account.avatar,
+                  'bio': account.bio, 'folowers': len(account.followers), 'folow': len(account.follow),
+                  'is_follow': int(current_user.id) in account.followers}
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author == user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
                 else:
-                    post.self_like = False
-            else:
-                post.self_like = False
-            post.liked = len(post.liked)
-            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                              'ico', 'tif', 'tiff']:
-                post.file_type = "img"
-            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                post.file_type = "video"
-            else:
-                post.file_type = "None"
-            posts.append(post)
-    posts = list(reversed(posts))
-    db_sess.close()
+                    post.file_type = "None"
+                posts.append(post)
+        posts = list(reversed(posts))
+    else:
+        params = {'accid': account.id, 'username': username, 'name': account.name, 'avatar': account.avatar,
+                  'bio': account.bio, 'folowers': len(account.followers), 'folow': len(account.follow),
+                  'is_follow': None}
+        posts_all = db_sess.query(Post).all()
+        posts = []
+        for post in posts_all:
+            if post.author == user.id:
+                post.avatar = get_avatar_by_user_id(post.author)
+                post.username = get_username_by_user_id(post.author)
+                post.author = get_name_by_user_id(post.author)
+                post.time = post.time.strftime("%d:%m:%Y %H:%M")
+                if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                                  'ico', 'tif', 'tiff']:
+                    post.file_type = "img"
+                elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+                    post.file_type = "video"
+                else:
+                    post.file_type = "None"
+                posts.append(post)
+        posts = list(reversed(posts))
     return render_template('profile.html', posts=posts, **params)
 
 
@@ -484,7 +372,6 @@ def follow(username, accid):
     f2.append(int(current_user.id))
     acc2.followers = list(set(f2))
     db_sess.commit()
-    db_sess.close()
     return redirect(f'/users/@{username}')
 
 
@@ -503,7 +390,7 @@ def edit_profile():
         file = form.avatar.data
         if file and allowed_file(file.filename):
             filename = str(user.id) + '.jpg'  # Имя файла устанавливаем на основе id пользователя
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER_AVATAR'], filename)
             img = Image.open(file)
             # Обрезаем изображение до соотношения сторон 1:1
             width, height = img.size
@@ -516,14 +403,14 @@ def edit_profile():
             # Сохраняем обрезанное изображение
             img_cropped.save(filepath, 'PNG')
 
-        accaunt.avatar = filepath
+            accaunt.avatar = "/" + filepath
         db_sess.commit()
         return redirect(f"/users/@{user.username}")
-    db_sess.close()
     return render_template('edit_profile.html', title='Редактировать', form=form)
 
 
 @app.route('/unfollow/<username>/<accid>')
+@login_required
 def unfollow(username, accid):
     db_sess = db_session.create_session()
     acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -535,11 +422,11 @@ def unfollow(username, accid):
     f2.remove(int(current_user.id))
     acc2.followers = list(set(f2))
     db_sess.commit()
-    db_sess.close()
     return redirect(f'/users/@{username}')
 
 
 @app.route('/like/<post_id>')
+@login_required
 def like(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -548,11 +435,11 @@ def like(post_id):
     liked.append(acc.id)
     post.liked = list(set(liked))
     db_sess.commit()
-    db_sess.close()
-    return '200'
+    return redirect("/")
 
 
 @app.route('/unlike/<post_id>')
+@login_required
 def unlike(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -561,95 +448,40 @@ def unlike(post_id):
     liked.remove(int(acc.id))
     post.liked = list(set(liked))
     db_sess.commit()
-    db_sess.close()
-    return '200'
+    return redirect("/")
 
 
-# ------------------------------------------------------(API)-----------------------------------------------------------
-
-@app.route('/api/v1/status', methods=['GET'])
-def api_v1_status():
-    return "200"
-
-
-@app.route('/adminlogin', methods=['GET'])
-def adminlogin():
-    key = request.args.get('key')
-    username = request.args.get('username')
-    if key == app.config['SECRET_KEY']:
-        try:
-            logout_user()
-        except:
-            pass
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.username == username).first()
-        login_user(user, remember=True)
-        db_sess.close()
-        return redirect('/')
-    return "NEPRAVILI KUCH"
-
-
-@app.route('/api/v1/getuser', methods=['GET'])
-def api_v1_getuser():
+@app.route('/comments/<post_id>', methods=['GET', 'POST'])
+@login_required
+def comments(post_id):
     db_sess = db_session.create_session()
-    username = request.args.get('username')
-    user = db_sess.query(User).filter(User.username == username).first()
-    account = db_sess.query(Account).filter(Account.id == user.id).first()
-    response = {
-        "user": {
-            "id": user.id,
-            "username": username,
-        },
-        "account": {
-            "id": account.id,
-            "username": username,
-            "name": account.name,
-            "bio": account.bio,
-            "followers": account.followers,
-        }
-    }
-    db_sess.close()
-    return response
+    #acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    form = CommentForm()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    posts_all = db_sess.query(Post).all
+    if form.validate_on_submit():
+        comment = Comment(
+            author=current_user.id,
+            text=form.text.data,
+            post_id=post_id
+        )
+        db_sess.add(comment)
+        post.count_comments += 1
+        db_sess.commit()
+        return redirect(f'/comments/{post_id}')
 
-
-@app.route('/adminlogin', methods=['GET'])
-def adminlogin():
-    key = request.args.get('key')
-    username = request.args.get('username')
-    if key == app.config['SECRET_KEY']:
-        try:
-            logout_user()
-        except:
-            pass
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.username == username).first()
-        login_user(user, remember=True)
-        db_sess.close()
-        return redirect('/')
-    return "401"
-
-
-@app.route('/api/v1/delpost', methods=['GET'])
-def api_v1_delpost():
-    key = request.args.get('key')
-    postid = request.args.get('postid')
-    if key == app.config['SECRET_KEY']:
-        db_sess = db_session.create_session()
-        post = db_sess.query(Post).filter(Post.id == int(postid)).first()
-        if post:
-            db_sess.delete(post)
-            db_sess.commit()
-            db_sess.close()
-            return "Done"
-        else:
-            db_sess.close()
-            return "Post wasn't found"
-    return "401"
+    comments = list(reversed(db_sess.query(Comment).filter(Comment.post_id == post.id).all()))
+    post.avatar = get_avatar_by_user_id(post.author)
+    post.username = get_username_by_user_id(post.author)
+    post.author = get_name_by_user_id(post.author)
+    post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all,
+                           comments=comments, get_name_by_user_id=get_name_by_user_id)
 
 
 def main():
     db_session.global_init("db/users.db")
-    app.run()
+    app.run(host='0.0.0.0')
 
 
 if __name__ == '__main__':

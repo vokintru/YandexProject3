@@ -13,3 +13,7 @@ class RepostForm(FlaskForm):
     text = TextAreaField('Реквакание', validators=[DataRequired()])
     submit = SubmitField('Реквакнуть')
 
+
+class CommentForm(FlaskForm):
+    text = TextAreaField('Комментарий', validators=[DataRequired()])
+    submit = SubmitField('отправить')
