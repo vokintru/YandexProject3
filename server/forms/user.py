@@ -23,6 +23,3 @@ class EditForm(FlaskForm):
     bio = TextAreaField('Биография', validators=[DataRequired()])
     avatar = FileField('Аватарка')
     submit = SubmitField('Сохранить')
-
-    def __repr__(self):
-        return f"name: {self.name}; username: {self.username}; bio: {self.bio}; avatar: {self.avatar}; "

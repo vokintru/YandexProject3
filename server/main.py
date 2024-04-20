@@ -4,12 +4,15 @@ from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-
+from pickle import loads, dumps
 from data import db_session
 from data.posts import Post
 from data.users import User, Account
-from forms.post import NewPostForm, RepostForm
+from data.comments import Comment
+from forms.post import NewPostForm, RepostForm, CommentForm
 from forms.user import RegisterForm, LoginForm, EditForm
+import random
+import datetime
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -87,6 +90,7 @@ def all_posts():
             liked=[],
             orig_post=0,
             count_reposts=0,
+            count_comments=0
         )
         db_sess.add(post)
         db_sess.commit()
@@ -296,6 +300,7 @@ def find_orig_post(db_sess, orig_post):
 
 
 @app.route("/repost/<orig_post>", methods=['GET', 'POST'])
+@login_required
 def repost(orig_post):
     form = RepostForm()
     db_sess = db_session.create_session()
@@ -325,7 +330,8 @@ def repost(orig_post):
                 tegs=tegi,
                 liked=[],
                 orig_post=orig_post,
-                count_reposts=0
+                count_reposts=0,
+                count_comments=0
             )
             orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
             orig_db.count_reposts += 1
@@ -531,6 +537,7 @@ def follow(username, accid):
 
 
 @app.route('/unfollow/<username>/<accid>')
+@login_required
 def unfollow(username, accid):
     db_sess = db_session.create_session()
     acc1 = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -547,6 +554,7 @@ def unfollow(username, accid):
 
 
 @app.route('/like/<post_id>')
+@login_required
 def like(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -560,6 +568,7 @@ def like(post_id):
 
 
 @app.route('/unlike/<post_id>')
+@login_required
 def unlike(post_id):
     db_sess = db_session.create_session()
     acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
@@ -570,6 +579,31 @@ def unlike(post_id):
     db_sess.commit()
     db_sess.close()
     return 'Done'
+
+@app.route('/comments/<post_id>', methods=['GET', 'POST'])
+@login_required
+def comments(post_id):
+    db_sess = db_session.create_session()
+    # acc = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    form = CommentForm()
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    posts_all = db_sess.query(Post).all
+    if form.validate_on_submit():
+        comment = Comment(
+            author=current_user.id,
+            text=form.text.data,
+            post_id=post_id
+        )
+        db_sess.add(comment)
+        post.count_comments += 1
+        db_sess.commit()
+        return redirect(f'/comments/{post_id}')
+
+    comments = list(reversed(db_sess.query(Comment).filter(Comment.post_id == post.id).all()))
+    post.avatar = get_avatar_by_user_id(post.author)
+    post.username = get_username_by_user_id(post.author)
+    post.author = get_name_by_user_id(post.author)
+    post.time = post.time.strftime("%d:%m:%Y %H:%M")
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------
@@ -639,7 +673,7 @@ def api_v1_delpost():
 
 def main():
     db_session.global_init("db/users.db")
-    app.run()
+    app.run(host='0.0.0.0')
 
 
 if __name__ == '__main__':

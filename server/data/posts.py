@@ -21,6 +21,7 @@ class Post(SqlAlchemyBase, UserMixin):
     orig_post = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     count_reposts = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     badges = []
+    count_comments = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
 
     def __repr__(self):
         return f'<Post> id: {self.id} author: {self.author} text: {self.text} file_path: {self.file_path} ' \
