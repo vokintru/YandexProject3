@@ -31,7 +31,7 @@ def load_user(user_id):
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
 
 def get_avatar_by_user_id(user_id):
@@ -461,9 +461,9 @@ def comments(post_id):
     posts_all = db_sess.query(Post).all
     if form.validate_on_submit():
         comment = Comment(
-            author=current_user.id,
-            text=form.text.data,
-            post_id=post_id
+            author = current_user.id,
+            text = form.text.data,
+            post_id = post_id
         )
         db_sess.add(comment)
         post.count_comments += 1
@@ -475,8 +475,7 @@ def comments(post_id):
     post.username = get_username_by_user_id(post.author)
     post.author = get_name_by_user_id(post.author)
     post.time = post.time.strftime("%d:%m:%Y %H:%M")
-    return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all,
-                           comments=comments, get_name_by_user_id=get_name_by_user_id)
+    return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all, comments=comments, get_name_by_user_id=get_name_by_user_id)
 
 
 def main():
