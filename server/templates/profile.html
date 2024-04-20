@@ -185,20 +185,20 @@
                             <img src="/{{posts_all[post.orig_post-1].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
                                 <h5 class="mt-0"><a href="/users/{{posts_all[post.orig_post-1].username}}" style="color: #609041;">{{posts_all[post.orig_post-1].author}}</a>
-                                {% if post.badges != [] and post.badges != None %}
-                                    {% if "verified-account" in post.badges %}
+                                {% if posts_all[post.orig_post-1].badges != [] and posts_all[post.orig_post-1].badges != None %}
+                                    {% if "verified-account" in posts_all[post.orig_post-1].badges %}
                                         <div class="badge-container">
                                           <img width="24" height="24" src="/static/img/badges/verified-account.png"/>
                                           <div class="popup" id="popup" style="font-size: 16px;">Подтверждённый аккаунт</div>
                                         </div>
                                     {% endif %}
-                                    {% if "developer" in post.badges %}
+                                    {% if "developer" in posts_all[post.orig_post-1].badges %}
                                         <div class="badge-container">
                                           <img width="24" height="24" src="/static/img/badges/developer.png"/>
                                           <div class="popup" id="popup" style="font-size: 16px;">Разработчик Болота</div>
                                         </div>
                                     {% endif %}
-                                    {% if "betatest" in post.badges %}
+                                    {% if "betatest" in posts_all[post.orig_post-1].badges %}
                                         <div class="badge-container">
                                           <img width="24" height="24" src="/static/img/badges/betatest.png"/>
                                           <div class="popup" id="popup" style="font-size: 16px;">Учавствовал в бета тестировании</div>

@@ -4,7 +4,7 @@ from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-
+import re
 from data import db_session
 from data.posts import Post
 from data.users import User, Account
@@ -30,6 +30,14 @@ def load_user(user_id):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+
+
+def check_username(input_string):
+    pattern = r'^[a-zA-Zа-яА-Я0-9_\.]+$'
+    if re.match(pattern, input_string):
+        return True
+    else:
+        return False
 
 
 def get_avatar_by_user_id(user_id):
@@ -60,7 +68,20 @@ def get_username_by_user_id(user_id):
     user = db_sess.query(User).filter(User.id == user_id).first()
     db_sess.close()
     if account:
+        print(user.username)
         return f"@{user.username}"
+    return None
+
+
+def get_user_id_by_username(username, sobaka):
+    db_sess = db_session.create_session()
+    if sobaka:
+        username = username[1:]
+    print(username)
+    account = db_sess.query(Account).filter(Account.name == username).first()
+    db_sess.close()
+    if account:
+        return account.id
     return None
 
 
@@ -153,26 +174,15 @@ def subscriptions():
     account = db_sess.query(Account).filter(Account.id == current_user.id).first()
     follow = account.follow
     posts_all = db_sess.query(Post).all()
+    posts_all = process_posts(posts_all)
     posts = []
     for post in posts_all:
-        if post.author in follow or post.author == current_user.id:
-            post.avatar = get_avatar_by_user_id(post.author)
-            post.username = get_username_by_user_id(post.author)
-            post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
-            post.author = get_name_by_user_id(post.author)
-            post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            if current_user.id in post.liked:
-                post.self_like = True
-            else:
-                post.self_like = False
-            post.liked = len(post.liked)
-            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                              'ico', 'tif', 'tiff']:
-                post.file_type = "img"
-            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                post.file_type = "video"
-            else:
-                post.file_type = "None"
+        if post.author[0] == "@":
+            da = True
+        else:
+            da = False
+        temp_author = get_user_id_by_username(post.author, da)
+        if temp_author in follow or temp_author == current_user.id:
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
@@ -385,6 +395,10 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
+        if not check_username:
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Юзернейм может содержать только буквы, нижние подчёркивание и точку")
         user = User(
             username=form.username.data,
             hashed_password=form.password.data
@@ -446,31 +460,14 @@ def profile(username):
     else:
         params['is_follow'] = False
     posts_all = db_sess.query(Post).all()
+    posts_all = process_posts(posts_all)
     posts = []
     for post in posts_all:
-        if post.author == user.id:
-            if post.orig_post != 0:
-                with db_sess.no_autoflush:
-                    post.badges = db_sess.query(Account).filter(Account.name == db_sess.query(Post).filter(Post.id == post.orig_post).first().author[1:]).first().badges
-            post.avatar = get_avatar_by_user_id(post.author)
-            post.username = get_username_by_user_id(post.author)
-            post.author = get_name_by_user_id(post.author)
-            post.time = post.time.strftime("%d:%m:%Y %H:%M")
-            if current_user.is_authenticated:
-                if current_user.id in post.liked:
-                    post.self_like = True
-                else:
-                    post.self_like = False
-            else:
-                post.self_like = False
-            post.liked = len(post.liked)
-            if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
-                                                              'ico', 'tif', 'tiff']:
-                post.file_type = "img"
-            elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
-                post.file_type = "video"
-            else:
-                post.file_type = "None"
+        if post.author[0] == "@":
+            da = True
+        else:
+            da = False
+        if get_user_id_by_username(post.author, da) == user.id:
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
@@ -485,6 +482,10 @@ def edit_profile():
     user = db_sess.query(User).filter(User.id == current_user.id).first()
     form = EditForm(name=accaunt.name, bio=accaunt.bio, username=user.username)
     if form.validate_on_submit():
+        if not check_username(form.username.data):
+            return render_template('edit_profile.html',
+                                   form=form,
+                                   message="Юзернейм может содержать только буквы, нижние подчёркивание и точку")
         accaunt.bio = form.bio.data
         accaunt.name = form.name.data
         user.username = form.username.data
