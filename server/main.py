@@ -3,6 +3,7 @@ from PIL import Image
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
+from discord_webhook import DiscordWebhook, DiscordEmbed
 import re
 from data import db_session
 from data.posts import Post
@@ -150,6 +151,7 @@ def subscriptions():
             liked=[],
             orig_post=0,
             count_reposts=0,
+            count_comments=0,
         )
         db_sess.add(post)
         db_sess.commit()
@@ -334,7 +336,8 @@ def repost(orig_post):
                 tegs=tegi,
                 liked=[],
                 orig_post=orig_post,
-                count_reposts=0
+                count_reposts=0,
+                count_comments=0,
             )
             orig_db = db_sess.query(Post).filter(Post.id == orig_post).first()
             orig_db.count_reposts += 1
@@ -355,7 +358,8 @@ def repost(orig_post):
                 tegs=tegi,
                 liked=[],
                 orig_post=orig_post,
-                count_reposts=0
+                count_reposts=0,
+                count_comments=0,
             )
             orig_db.count_reposts += 1
             db_sess.add(post)
@@ -575,6 +579,53 @@ def unlike(post_id):
     return 'Done'
 
 
+@app.route('/report/<post_id>')
+def report(post_id):
+    db_sess = db_session.create_session()
+    webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
+                                 "/t7a_idvkSuHt4Oq7jeQmyHwAiiQ7i9njx2B1_oWUgBolykZqI-hhN6ggBsDxnSkLAN4B")
+    post = db_sess.query(Post).filter(Post.id == post_id).first()
+    account = db_sess.query(Account).filter(Account.id == post.author).first()
+    user = db_sess.query(User).filter(User.id == account.id).first()
+    embed = DiscordEmbed(title="Type: POST", description=f"ID: {post_id}", color="79b253")
+
+    embed.set_author(
+        name=f"@{user.username}",
+        url=f"https://zhabki.ru/users/@{user.username}",
+    )
+
+    embed.add_embed_field(name="Содержание", value=post.text, inline=False)
+    embed.add_embed_field(name="Медиа:", value=f"{post.file_path}", inline=False)
+
+    webhook.add_embed(embed)
+    webhook.execute()
+    db_sess.close()
+    return 'Done'
+
+
+@app.route('/report_comment/<comment_id>')
+def report_comment(comment_id):
+    db_sess = db_session.create_session()
+    webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
+                                 "/t7a_idvkSuHt4Oq7jeQmyHwAiiQ7i9njx2B1_oWUgBolykZqI-hhN6ggBsDxnSkLAN4B")
+    comment = db_sess.query(Comment).filter(Comment.id == comment_id).first()
+    account = db_sess.query(Account).filter(Account.id == comment.author).first()
+    user = db_sess.query(User).filter(User.id == account.id).first()
+    embed = DiscordEmbed(title=f"Type: COMMENT", description=f"ID: {comment_id}", color="79b253")
+
+    embed.set_author(
+        name=f"@{user.username}",
+        url=f"https://zhabki.ru/users/@{user.username}",
+    )
+
+    embed.add_embed_field(name="Содержание", value=comment.text, inline=False)
+
+    webhook.add_embed(embed)
+    webhook.execute()
+    db_sess.close()
+    return 'Done'
+
+
 @app.route('/comments/<post_id>', methods=['GET', 'POST'])
 def comments(post_id):
     db_sess = db_session.create_session()
@@ -607,12 +658,68 @@ def comments(post_id):
         with db_sess.no_autoflush:
             post.orig_post = db_sess.query(Post).filter(Post.id == post.orig_post).first()
             orig_post_avatar = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().avatar
-            post.orig_post.username = "@" + db_sess.query(User).filter(User.id == post.orig_post.author).first().username
+            post.orig_post.username = "@" + db_sess.query(User).filter(
+                User.id == post.orig_post.author).first().username
             post.orig_post.name = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().name
     db_sess.close()
     return render_template('comments.html', title='Комментарии', form=form, post=post, posts_all=posts_all,
                            comments=comments, get_name_by_user_id=get_name_by_user_id,
                            orig_post_avatar=orig_post_avatar)
+
+
+@app.route("/post/<postid>", methods=['GET', 'POST'])
+def post(postid):
+    db_sess = db_session.create_session()
+    form = CommentForm()
+    post = db_sess.query(Post).filter(Post.id == int(postid)).first()
+    if form.validate_on_submit():
+        comment = Comment(
+            author=current_user.id,
+            text=form.text.data,
+            post_id=postid
+        )
+        db_sess.add(comment)
+        post.count_comments += 1
+        db_sess.commit()
+        db_sess.close()
+        return redirect(f'/comments/{postid}')
+
+    post.avatar = get_avatar_by_user_id(post.author)
+    post.username = get_username_by_user_id(post.author)
+    post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
+    post.author = get_name_by_user_id(post.author)
+    post.time = post.time.strftime("%d:%m:%Y %H:%M")
+    if current_user.is_authenticated:
+        if current_user.id in post.liked:
+            post.self_like = True
+        else:
+            post.self_like = False
+    else:
+        post.self_like = False
+    post.liked = len(post.liked)
+    if str(post.file_path).split(".")[-1].lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp',
+                                                      'ico', 'tif', 'tiff']:
+        post.file_type = "img"
+    elif str(post.file_path).split(".")[-1].lower() in ["webm", "mp4", "ogg", "ogv", "avi", "mov", "wmv"]:
+        post.file_type = "video"
+    else:
+        post.file_type = "None"
+    if post.orig_post != 0:
+        with db_sess.no_autoflush:
+            post.orig_post = db_sess.query(Post).filter(Post.id == post.orig_post).first()
+            post.orig_post.avatar = get_avatar_by_user_id(post.orig_post.author)
+            post.orig_post.username = get_username_by_user_id(post.orig_post.author)
+            post.orig_post.badges = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().badges
+            post.orig_post.author = get_name_by_user_id(post.orig_post.author)
+            post.orig_post.time = post.orig_post.time.strftime("%d:%m:%Y %H:%M")
+    with db_sess.no_autoflush:
+        comments = list(reversed(db_sess.query(Comment).filter(Comment.post_id == post.id).all()))
+        for comment in comments:
+            comment.avatar = get_avatar_by_user_id(comment.author)
+            comment.username = get_username_by_user_id(comment.author)
+            comment.name = get_name_by_user_id(comment.author)
+    db_sess.close()
+    return render_template('onepost.html', post=post, comments=comments, form=form)
 
 
 # ------------------------------------------------------(API)-----------------------------------------------------------
@@ -677,6 +784,26 @@ def api_v1_delpost():
         else:
             db_sess.close()
             return "Post wasn't found"
+    return "401"
+
+
+@app.route('/api/v1/delcomment', methods=['GET'])
+def api_v1_delcomment():
+    key = request.args.get('key')
+    commentid = request.args.get('commentid')
+    if key == app.config['SECRET_KEY']:
+        db_sess = db_session.create_session()
+        comment = db_sess.query(Comment).filter(Comment.id == int(commentid)).first()
+        if comment:
+            db_sess.delete(comment)
+            post = db_sess.query(Post).filter(Post.id == comment.post_id).first()
+            post.liked.remove(comment.author)
+            db_sess.commit()
+            db_sess.close()
+            return "Done"
+        else:
+            db_sess.close()
+            return "Comment wasn't found"
     return "401"
 
 

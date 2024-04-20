@@ -128,6 +128,13 @@
                                   ID: {{post.id}}
                                 </p>
                             </div>
+                            <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+                              ...
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                              <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+                              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('http://127.0.0.1:5000/report/{{post.id}}')">Пожаловаться</button></li>
+                            </ul>
                         </div>
                         {% if current_user.is_authenticated %}
                             {% if post.self_like == True %}
@@ -247,6 +254,13 @@
                                   ID: {{post.id}}
                                 </p>
                             </div>
+                            <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+                              ...
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                              <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+                              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('http://127.0.0.1:5000/report/{{post.id}}')">Пожаловаться</button></li>
+                            </ul>
                         </div>
                         {% if current_user.is_authenticated %}
                             {% if post.self_like == True %}

@@ -38,10 +38,47 @@
         {% endif %}
     </nav>
 </header>
+<div id="notification" class="notification">
+    <span class="close" onclick="closeNotification()">&times;</span>
+    <p>Ссылка скопирована</p>
+</div>
+<div id="notification-report" class="notification">
+    <span class="close" onclick="closeNotification()">&times;</span>
+    <p>Жалоба отправлена</p>
+</div>
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 <script>
+function copyText(text) {
+  /* Создаем временный элемент для копирования текста */
+  var tempInput = document.createElement("input");
+
+  /* Устанавливаем значение временного элемента */
+  tempInput.value = text;
+
+  /* Добавляем временный элемент на страницу */
+  document.body.appendChild(tempInput);
+
+  /* Выделяем текст во временном элементе */
+  tempInput.select();
+  tempInput.setSelectionRange(0, 99999); /* Для мобильных устройств */
+
+  /* Копируем выделенный текст */
+  document.execCommand("copy");
+
+  /* Удаляем временный элемент */
+  document.body.removeChild(tempInput);
+
+  /* Визуальное подтверждение копирования */
+  document.getElementById("notification").style.display = "block";
+}
+function closeNotification() {
+    document.getElementById("notification").style.display = "none";
+    document.getElementById("notification-report").style.display = "none";
+}
 document.addEventListener("DOMContentLoaded", function() {
     var paragraphs = document.getElementsByTagName("p");
 
@@ -99,6 +136,23 @@ function makeRequest(url) {
     setTimeout(function() {
         window.location.reload();
     }, 10);
+}
+function makeRequestNoUpdate(url) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            // Успешный ответ
+            console.log(xhr.responseText);
+        } else {
+            // Обработка ошибок
+            console.error('Произошла ошибка при выполнении запроса.');
+        }
+    };
+
+    xhr.send();
+    document.getElementById("notification-report").style.display = "block";
 }
 </script>
 

@@ -6,6 +6,7 @@ import os
 
 bot = commands.InteractionBot()
 load_dotenv()
+server_api_key = os.getenv('API_KEY')
 
 
 @bot.slash_command(name="get_user", description="По имени пользователя получает всю информацию о нём")
@@ -23,12 +24,22 @@ async def get_user(inter: disnake.ApplicationCommandInteraction, user: str):
 
 
 @bot.slash_command(name="del_post", description="Удаляется пост по id")
-async def get_user(inter: disnake.ApplicationCommandInteraction, postid: int):
+async def del_post(inter: disnake.ApplicationCommandInteraction, postid: int):
     url = f"https://zhabki.ru/api/v1/delpost"
-    response = requests.get(url, params={"postid": postid, "key": "boloto_p07G5n1W2E4f8Zq1Xc6T7yU"})
+    response = requests.get(url, params={"postid": postid, "key": server_api_key})
     if response.status_code == 200:
         data = response.text
-        print(data)
+        await inter.response.send_message(data, ephemeral=True)
+    else:
+        await inter.response.send_message("Ошибка на стороне сервера", ephemeral=True)
+
+
+@bot.slash_command(name="del_comment", description="Удаляется комментарий по id")
+async def del_comment(inter: disnake.ApplicationCommandInteraction, commentid: int):
+    url = f"https://zhabki.ru/api/v1/delcomment"
+    response = requests.get(url, params={"commentid": commentid, "key": server_api_key})
+    if response.status_code == 200:
+        data = response.text
         await inter.response.send_message(data, ephemeral=True)
     else:
         await inter.response.send_message("Ошибка на стороне сервера", ephemeral=True)

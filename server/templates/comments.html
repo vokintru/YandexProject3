@@ -44,13 +44,13 @@
                                 <p id="content">{{post.orig_post.text}}</p>
                                 {% if post.orig_post.file_path %}
                                     {% if post.orig_post.file_type == "img" %}
-                                        <img src="/{{posts_all[post.orig_post].file_path}}" style="width: 550px; height: auto;">
+                                        <img src="/{{post.orig_post.file_path}}" style="width: 550px; height: auto;">
                                     {% elif post.orig_post.file_type == "video" %}
                                         <video controls width="550">
-                                          <source src=/{{posts_all[post.orig_post].file_path}} />
+                                          <source src=/{{post.orig_post.file_path}} />
                                         </video>
                                     {% else %}
-                                        <p><a href=/{{posts_all[post.orig_post].file_path}}>Скачать файл</a></p>
+                                        <p><a href=/{{post.orig_post.file_path}}>Скачать файл</a></p>
                                     {% endif %}
                                 {% endif %}
                                 <p class="post-date" style="color: grey; font-size: smaller;">{{post.orig_post.time}}</p>
@@ -85,7 +85,7 @@
     <hr>
 {% endif %}
 {% for comment in comments %}
-    <div class="post border rounded p-3 mb-3">
+    <div class="post border rounded p-3 mb-3 position-relative">
         <div class="media">
             <img src="/{{comment.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
             <div class="media-body">
@@ -93,6 +93,17 @@
                                 <hr>
                                 <p id="content">{{comment.text}}</p>
             </div>
+            <div class="post-actions">
+                <p class="post-date text-muted" style="font-size: smaller; bottom: 5px; right: 10px;">
+                  ID: {{comment.id}}
+                </p>
+            </div>
+            <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+              ...
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{comment.id}}">
+              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('http://127.0.0.1:5000/report_comment/{{comment.id}}')">Пожаловаться</button></li>
+            </ul>
         </div>
     </div>
 {% endfor %}

@@ -5,3 +5,7 @@ werkzeug
 flask_login
 flask_wtf
 pillow
+discord-webhook
+disnake
+dotenv
+requests
