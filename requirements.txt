@@ -7,5 +7,5 @@ flask_wtf
 pillow
 discord-webhook
 disnake
-dotenv
+python-dotenv
 requests
