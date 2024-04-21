@@ -25,8 +25,7 @@
 
 * На главной странице если пользователь авторизован:
   * Пользователь увидит две ленты. Одна со всеми постами, а вторая только с подписками
-  ![screens/lenta_all.png](screens/lenta_all.png)
-  ![screens/lenta_sub.png](screens/lenta_sub.png)
+  ![screens/lenta.gif](screens/lenta.gif)
 
 <hr>
 
