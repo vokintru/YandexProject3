@@ -31,7 +31,7 @@ def load_user(user_id):
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
 
 def check_username(input_string):
@@ -61,6 +61,19 @@ def get_name_by_user_id(user_id):
             return account.name
         else:
             return f"@{user.username}"
+    return None
+
+
+def get_user_id_by_name(name):
+    db_sess = db_session.create_session()
+    if name[0] == '@':
+        account = db_sess.query(User).filter(User.username == name).first()
+        db_sess.close()
+    else:
+        account = db_sess.query(Account).filter(Account.name == name).first()
+        db_sess.close()
+    if account:
+        return account.id
     return None
 
 
@@ -130,7 +143,8 @@ def all_posts():
     posts = process_posts(posts_all)
     posts = list(reversed(posts))
     db_sess.close()
-    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form,
+                           get_id=get_user_id_by_name)
 
 
 @app.route("/subscriptions", methods=['GET', 'POST'])
@@ -476,7 +490,7 @@ def profile(username):
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
-    return render_template('profile.html', posts=posts, posts_all=posts_all, **params)
+    return render_template('profile.html', posts=posts, posts_all=posts_all,get_id=get_user_id_by_name , **params)
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -721,6 +735,19 @@ def post(postid):
     db_sess.close()
     return render_template('onepost.html', post=post, comments=comments, form=form)
 
+
+@app.route('/delpost/<fromm>/<id>')
+def delitepost(fromm, id):
+    db_sess = db_session.create_session()
+    post = db_sess.query(Post).filter(Post.id == int(id)).first()
+    if post.author == current_user.id:
+        if post:
+            db_sess.delete(post)
+            db_sess.commit()
+    db_sess.close()
+    if fromm == 'profile':
+        return redirect(f'/users/@{current_user.username}')
+    return redirect('/')
 
 # ------------------------------------------------------(API)-----------------------------------------------------------
 
