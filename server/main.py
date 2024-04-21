@@ -480,9 +480,11 @@ def profile(username):
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
-@login_required
 def edit_profile():
     db_sess = db_session.create_session()
+    if not current_user.is_authenticated:
+        db_sess.close()
+        return redirect('/login')
     accaunt = db_sess.query(Account).filter(Account.id == current_user.id).first()
     user = db_sess.query(User).filter(User.id == current_user.id).first()
     form = EditForm(name=accaunt.name, bio=accaunt.bio, username=user.username)
