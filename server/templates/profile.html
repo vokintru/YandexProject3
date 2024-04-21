@@ -126,6 +126,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
                                 {% if current_user.id == get_id(post.author) %}
+                                <li><a href="/editpost/profile/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
                                 <li><a href="/delpost/profile/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
                                 {% endif %}
                               <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
@@ -255,6 +256,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
                                 {% if current_user.id == get_id(post.author) %}
+                                <li><a href="/editpost/profile/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
                                 <li><a href="/delpost/profile/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
                                 {% endif %}
                               <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
