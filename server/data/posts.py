@@ -7,6 +7,12 @@ from sqlalchemy import orm
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+def now():  # на хостинге сбито время
+    current_datetime = datetime.datetime.now()
+    new_datetime = current_datetime + datetime.timedelta(hours=3)
+    return new_datetime
+
+
 class Post(SqlAlchemyBase, UserMixin):
     __tablename__ = 'posts'
 
@@ -15,7 +21,7 @@ class Post(SqlAlchemyBase, UserMixin):
     author = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     text = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     file_path = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    time = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    time = sqlalchemy.Column(sqlalchemy.DateTime, default=now)
     tegs = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     liked = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
     orig_post = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
