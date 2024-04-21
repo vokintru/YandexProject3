@@ -581,7 +581,7 @@ def unlike(post_id):
     return 'Done'
 
 
-@app.route('/report/<post_id>')
+@app.route('/report/<post_id>',  methods=['GET'])
 def report(post_id):
     db_sess = db_session.create_session()
     webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
@@ -597,7 +597,9 @@ def report(post_id):
     )
 
     embed.add_embed_field(name="Содержание", value=post.text, inline=False)
-    embed.add_embed_field(name="Медиа:", value=f"{post.file_path}", inline=False)
+    embed.add_embed_field(name="Медиа", value=f"{post.file_path}", inline=False)
+    if current_user.is_authenticated:
+        embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
 
     webhook.add_embed(embed)
     webhook.execute()
@@ -621,6 +623,8 @@ def report_comment(comment_id):
     )
 
     embed.add_embed_field(name="Содержание", value=comment.text, inline=False)
+    if current_user.is_authenticated:
+        embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
 
     webhook.add_embed(embed)
     webhook.execute()
