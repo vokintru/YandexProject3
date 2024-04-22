@@ -132,8 +132,12 @@
                               ...
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
-                                <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
-                                <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
+                                {% if current_user.id == get_id(post.author) %}
+                                <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
+                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
+                                {% endif %}
+                              <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+                              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
                             </ul>
                         </div>
                         {% if current_user.is_authenticated %}
@@ -258,6 +262,10 @@
                               ...
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                                {% if current_user.id == get_id(post.author) %}
+                                <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
+                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
+                                {% endif %}
                               <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
                               <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
                             </ul>

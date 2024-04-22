@@ -9,6 +9,10 @@ class NewPostForm(FlaskForm):
     submit = SubmitField('Квакнуть')
 
 
+class EditPostForm(FlaskForm):
+    text = TextAreaField('Квакание', validators=[DataRequired()])
+    submit = SubmitField('Квакнуть')
+
 class RepostForm(FlaskForm):
     text = TextAreaField('Реквакание', validators=[DataRequired()])
     submit = SubmitField('Реквакнуть')
