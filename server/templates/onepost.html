@@ -51,6 +51,17 @@
                     ID: {{post.id}}
                 </p>
             </div>
+            <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+              ...
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                {% if current_user.id == post.author.id %}
+                <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
+                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">Удалить</a></li>
+                {% endif %}
+              <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
+            </ul>
         </div>
         {% if current_user.is_authenticated %}
         {% if post.self_like == True %}
@@ -207,6 +218,17 @@
                     ID: {{post.id}}
                 </p>
             </div>
+            <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButtonPost{{post.id}}" data-bs-toggle="dropdown" aria-expanded="false">
+              ...
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
+                {% if current_user.id == post.author.id %}
+                <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
+                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">Удалить</a></li>
+                {% endif %}
+              <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
+              <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
+            </ul>
         </div>
         {% if current_user.is_authenticated %}
         {% if post.self_like == True %}

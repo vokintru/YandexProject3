@@ -41,5 +41,5 @@ class Account(SqlAlchemyBase, UserMixin):
     badges = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     def __repr__(self):
-        return f'<Account> {self.id} {self.name} {self.bio} {self.avatar} {self.followers} {self.follow} {self.posts} {self.badges}'
+        return f'<Account> {self.id} {self.name} {self.bio} {self.avatar} {self.followers} {self.follow} {self.badges}'
 

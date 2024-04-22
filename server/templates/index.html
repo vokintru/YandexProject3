@@ -86,7 +86,7 @@
                             <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
                                 <h5 class="mt-0">
-                                    <a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a>
+                                    <a href=/users/{{post.username}} style="color: #609041;">{{post.author.name}}</a>
                                     {% if post.badges != [] and post.badges != None %}
                                         {% if "verified-account" in post.badges %}
                                             <div class="badge-container">
@@ -132,9 +132,9 @@
                               ...
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
-                                {% if current_user.id == get_id(post.author) %}
+                                {% if current_user.id == post.author.id %}
                                 <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
-                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
+                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">Удалить</a></li>
                                 {% endif %}
                               <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
                               <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>
@@ -183,7 +183,7 @@
                         <div class="media">
                             <img src="{{post.avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author}}</a>
+                                <h5 class="mt-0"><a href=/users/{{post.username}} style="color: #609041;">{{post.author.name}}</a>
                                 {% if post.badges != [] and post.badges != None %}
                                     {% if "verified-account" in post.badges %}
                                         <div class="badge-container">
@@ -210,7 +210,7 @@
                                 <div class="media">
                             <img src="{{posts_all[post.orig_post-1].avatar}}" class="mr-3" alt="Аватар" style="width:64px;height:64px;border-radius:50%;">
                             <div class="media-body">
-                                <h5 class="mt-0"><a href="/users/{{posts_all[post.orig_post-1].username}}" style="color: #609041;">{{posts_all[post.orig_post-1].author}}</a>
+                                <h5 class="mt-0"><a href="/users/{{posts_all[post.orig_post-1].username}}" style="color: #609041;">{{posts_all[post.orig_post-1].author.name}}</a>
                                 {% if posts_all[post.orig_post-1].badges != [] and posts_all[post.orig_post-1].badges != None %}
                                     {% if "verified-account" in posts_all[post.orig_post-1].badges %}
                                         <div class="badge-container">
@@ -262,9 +262,9 @@
                               ...
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButtonPost{{post.id}}">
-                                {% if current_user.id == get_id(post.author) %}
+                                {% if current_user.id == post.author.id %}
                                 <li><a href="/editpost/index/{{post.id}}" class="dropdown-item" type="button">Редактировать</a></li>
-                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">удалить</a></li>
+                                <li><a href="/delpost/index/{{post.id}}" class="dropdown-item" type="button">Удалить</a></li>
                                 {% endif %}
                               <li><button class="dropdown-item" type="button" onclick="copyText('https://zhabki.ru/post/{{post.id}}')">Поделиться</button></li>
                               <li><button class="dropdown-item" type="button" onclick="makeRequestNoUpdate('https://zhabki.ru/report/{{post.id}}')">Пожаловаться</button></li>

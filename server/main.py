@@ -31,7 +31,7 @@ def load_user(user_id):
 
 def allowed_file(filename):
     return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_AVATAR
 
 
 def check_username(input_string):
@@ -90,7 +90,7 @@ def get_username_by_user_id(user_id):
 def get_user_id_by_username(username, sobaka):
     db_sess = db_session.create_session()
     if sobaka:
-        username = username[1:]
+        username = username
     account = db_sess.query(Account).filter(Account.name == username).first()
     db_sess.close()
     if account:
@@ -143,14 +143,17 @@ def all_posts():
     posts = process_posts(posts_all)
     posts = list(reversed(posts))
     db_sess.close()
-    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form,
-                           get_id=get_user_id_by_name)
+    return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
+
 
 @app.route('/editpost/<fromm>/<id>', methods=['GET', 'POST'])
 def editpost(fromm, id):
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == id).first()
-    form = EditPostForm(text = post.text)
+    if not current_user.id == post.author:
+        db_sess.close()
+        return redirect('/')
+    form = EditPostForm(text=post.text)
     if form.validate_on_submit():
         tegi = []
         for i in form.text.data.split(' '):
@@ -176,7 +179,8 @@ def editpost(fromm, id):
             post.orig_post.name = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().name
     db_sess.close()
     if get_user_id_by_name(post.author) == current_user.id:
-        return render_template('edit_post.html', post=post, form=form, get_name_by_user_id=get_name_by_user_id, orig_post_avatar=orig_post_avatar)
+        return render_template('edit_post.html', post=post, form=form, get_name_by_user_id=get_name_by_user_id,
+                               orig_post_avatar=orig_post_avatar)
     return redirect('/')
 
 
@@ -226,12 +230,7 @@ def subscriptions():
     posts_all = process_posts(posts_all)
     posts = []
     for post in posts_all:
-        if post.author[0] == "@":
-            da = True
-        else:
-            da = False
-        temp_author = get_user_id_by_username(post.author, da)
-        if temp_author in follow or temp_author == current_user.id:
+        if post.author.id in follow or post.author.id == current_user.id:
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
@@ -264,7 +263,7 @@ def process_posts(posts_all):
         post.username = get_username_by_user_id(post.author)
         with db_sess.no_autoflush:
             post.badges = db_sess.query(Account).filter(Account.id == post.author).first().badges
-        post.author = get_name_by_user_id(post.author)
+        post.author = db_sess.query(Account).filter(Account.id == post.author).first()
         post.time = post.time.strftime("%d:%m:%Y %H:%M")
         if current_user.is_authenticated:
             if current_user.id in post.liked:
@@ -515,15 +514,11 @@ def profile(username):
     posts_all = process_posts(posts_all)
     posts = []
     for post in posts_all:
-        if post.author[0] == "@":
-            da = True
-        else:
-            da = False
-        if get_user_id_by_username(post.author, da) == user.id:
+        if post.author.id == user.id:
             posts.append(post)
     posts = list(reversed(posts))
     db_sess.close()
-    return render_template('profile.html', posts=posts, posts_all=posts_all,get_id=get_user_id_by_name , **params)
+    return render_template('profile.html', posts=posts, posts_all=posts_all, get_id=get_user_id_by_name, **params)
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -628,7 +623,7 @@ def unlike(post_id):
     return 'Done'
 
 
-@app.route('/report/<post_id>',  methods=['GET'])
+@app.route('/report/<post_id>', methods=['GET'])
 def report(post_id):
     db_sess = db_session.create_session()
     webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
@@ -787,6 +782,7 @@ def delitepost(fromm, id):
     if fromm == 'profile':
         return redirect(f'/users/@{current_user.username}')
     return redirect('/')
+
 
 # ------------------------------------------------------(API)-----------------------------------------------------------
 
