@@ -150,7 +150,7 @@ def all_posts():
 def editpost(fromm, id):
     db_sess = db_session.create_session()
     post = db_sess.query(Post).filter(Post.id == id).first()
-    if not current_user.id == post.author:
+    if current_user.id != post.author:
         db_sess.close()
         return redirect('/')
     form = EditPostForm(text=post.text)
@@ -178,10 +178,8 @@ def editpost(fromm, id):
                 User.id == post.orig_post.author).first().username
             post.orig_post.name = db_sess.query(Account).filter(Account.id == post.orig_post.author).first().name
     db_sess.close()
-    if get_user_id_by_name(post.author) == current_user.id:
-        return render_template('edit_post.html', post=post, form=form, get_name_by_user_id=get_name_by_user_id,
-                               orig_post_avatar=orig_post_avatar)
-    return redirect('/')
+    return render_template('edit_post.html', post=post, form=form, get_name_by_user_id=get_name_by_user_id,
+                           orig_post_avatar=orig_post_avatar)
 
 
 @app.route("/subscriptions", methods=['GET', 'POST'])
