@@ -46,7 +46,7 @@ async def del_comment(inter: disnake.ApplicationCommandInteraction, commentid: i
 
 
 @bot.slash_command(name="shadow_ban_user", description="Ограничивает функционал пользователю")
-async def del_comment(inter: disnake.ApplicationCommandInteraction, user_id: id):
+async def del_comment(inter: disnake.ApplicationCommandInteraction, user_id: int):
     url = f"https://zhabki.ru/api/v1/banuser"
     response = requests.get(url, params={"userid": user_id, "key": server_api_key})
     if response.status_code == 200:
