@@ -655,6 +655,7 @@ def unlike(post_id):
 
 
 @app.route('/report/<post_id>', methods=['GET'])
+@login_required
 def report(post_id):
     db_sess = db_session.create_session()
     if current_user.banned == 1:
@@ -684,6 +685,7 @@ def report(post_id):
 
 
 @app.route('/report_comment/<comment_id>')
+@login_required
 def report_comment(comment_id):
     db_sess = db_session.create_session()
     if current_user.banned == 1:
