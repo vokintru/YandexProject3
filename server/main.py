@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
 from discord_webhook import DiscordWebhook, DiscordEmbed
+from dotenv import load_dotenv
 import re
 from data import db_session
 from data.posts import Post
@@ -16,8 +17,11 @@ import random
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.config['SECRET_KEY'] = 'boloto_p07G5n1W2E4f8Zq1Xc6T7yU'
+load_dotenv()
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['DISCORD_WEBHOOK_URL'] = os.getenv('DISCORD_WEBHOOK_URL')
 app.config['UPLOAD_FOLDER'] = 'static/content'
+app.config['MAX_FILE_SIZE'] = 50 * 1024 * 1024
 ALLOWED_EXTENSIONS_AVATAR = {'png', 'jpg', 'jpeg'}
 
 
@@ -109,6 +113,9 @@ def all_posts():
     form = NewPostForm()
 
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect('/all_posts')
         tegi = []
         for i in form.text.data.split(' '):
             if '#' in i:
@@ -125,19 +132,29 @@ def all_posts():
         )
         db_sess.add(post)
         db_sess.commit()
-
         if form.file.data:
             posts_all = db_sess.query(Post).all()
             filename = secure_filename(form.file.data.filename)
             file_id = f"file_{len(posts_all) + 1}.{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
-            form.file.data.save(file_path)
-            post.file_path = file_path
-            post.liked = []
-            post.orig_post = 0
-            post.count_reposts = 0
-            db_sess.commit()
-            db_sess.close()
+            form.file.data.seek(0, 2)
+            file_size = form.file.data.tell()
+            form.file.data.seek(0)
+            if file_size <= app.config['MAX_FILE_SIZE']:
+                form.file.data.save(file_path)
+                post.file_path = file_path
+                post.liked = []
+                post.orig_post = 0
+                post.count_reposts = 0
+                db_sess.commit()
+            else:
+                posts_all = db_sess.query(Post).all()
+                posts = process_posts(posts_all)
+                posts = list(reversed(posts))
+                db_sess.close()
+                return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form,
+                                       message='Размер файла превышает 50 MB')
+        db_sess.close()
         return redirect('/')
     posts_all = db_sess.query(Post).all()
     posts = process_posts(posts_all)
@@ -155,6 +172,9 @@ def editpost(fromm, id):
         return redirect('/')
     form = EditPostForm(text=post.text)
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect(f'/post/{id}')
         tegi = []
         for i in form.text.data.split(' '):
             if '#' in i:
@@ -186,8 +206,19 @@ def editpost(fromm, id):
 def subscriptions():
     db_sess = db_session.create_session()
     form = NewPostForm()
-
+    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
+    follow = account.follow
+    posts_all = db_sess.query(Post).all()
+    posts_all = process_posts(posts_all)
+    posts = []
+    for post in posts_all:
+        if post.author.id in follow or post.author.id == current_user.id:
+            posts.append(post)
+    posts = list(reversed(posts))
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect('/subscriptions')
         tegi = []
         for i in form.text.data.split(' '):
             if '#' in i:
@@ -210,27 +241,23 @@ def subscriptions():
             filename = secure_filename(form.file.data.filename)
             file_id = f"file_{len(posts_all) + 1}.{filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_id)
-            form.file.data.save(file_path)
-            post.file_path = file_path
-            post.liked = []
-            post.orig_post = 0
-            post.count_reposts = 0
-            db_sess.commit()
-        db_sess.close()
-        return redirect('/')
+            form.file.data.seek(0, 2)
+            file_size = form.file.data.tell()
+            form.file.data.seek(0)
+            if file_size <= app.config['MAX_FILE_SIZE']:
+                form.file.data.save(file_path)
+                post.file_path = file_path
+                post.liked = []
+                post.orig_post = 0
+                post.count_reposts = 0
+                db_sess.commit()
+            else:
+                db_sess.close()
+                return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form,
+                                       message='Размер файла превышает 50 MB')
     if not current_user.is_authenticated:
         db_sess.close()
-        return redirect('/login')  # Редирект на страницу входа, если пользователь не авторизован
-
-    account = db_sess.query(Account).filter(Account.id == current_user.id).first()
-    follow = account.follow
-    posts_all = db_sess.query(Post).all()
-    posts_all = process_posts(posts_all)
-    posts = []
-    for post in posts_all:
-        if post.author.id in follow or post.author.id == current_user.id:
-            posts.append(post)
-    posts = list(reversed(posts))
+        return redirect('/login')
     db_sess.close()
     return render_template('index.html', posts=posts, len=len, posts_all=posts_all, form=form)
 
@@ -368,6 +395,9 @@ def repost(orig_post):
     else:
         post.file_type = "None"
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect(f'/post/{orig_post}')
         if orig_db.orig_post == 0:
             db_sess = db_session.create_session()
             tegi = []
@@ -529,6 +559,9 @@ def edit_profile():
     user = db_sess.query(User).filter(User.id == current_user.id).first()
     form = EditForm(name=accaunt.name, bio=accaunt.bio, username=user.username)
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect(f'/users/@{current_user.username}')
         if not check_username(form.username.data):
             return render_template('edit_profile.html',
                                    form=form,
@@ -624,52 +657,58 @@ def unlike(post_id):
 @app.route('/report/<post_id>', methods=['GET'])
 def report(post_id):
     db_sess = db_session.create_session()
-    webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
-                                 "/t7a_idvkSuHt4Oq7jeQmyHwAiiQ7i9njx2B1_oWUgBolykZqI-hhN6ggBsDxnSkLAN4B")
-    post = db_sess.query(Post).filter(Post.id == post_id).first()
-    account = db_sess.query(Account).filter(Account.id == post.author).first()
-    user = db_sess.query(User).filter(User.id == account.id).first()
-    embed = DiscordEmbed(title="Type: POST", description=f"ID: {post_id}", color="79b253")
+    if current_user.banned == 1:
+        db_sess.close()
+        return 'You Banned'
+    else:
+        webhook = DiscordWebhook(url=app.config['DISCORD_WEBHOOK_URL'])
+        post = db_sess.query(Post).filter(Post.id == post_id).first()
+        account = db_sess.query(Account).filter(Account.id == post.author).first()
+        user = db_sess.query(User).filter(User.id == account.id).first()
+        embed = DiscordEmbed(title="Type: POST", description=f"ID: {post_id}", color="79b253")
 
-    embed.set_author(
-        name=f"@{user.username}",
-        url=f"https://zhabki.ru/users/@{user.username}",
-    )
+        embed.set_author(
+            name=f"@{user.username}",
+            url=f"https://zhabki.ru/users/@{user.username}",
+        )
 
-    embed.add_embed_field(name="Содержание", value=post.text, inline=False)
-    embed.add_embed_field(name="Медиа", value=f"{post.file_path}", inline=False)
-    if current_user.is_authenticated:
-        embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
+        embed.add_embed_field(name="Содержание", value=post.text, inline=False)
+        embed.add_embed_field(name="Медиа", value=f"{post.file_path}", inline=False)
+        if current_user.is_authenticated:
+            embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
 
-    webhook.add_embed(embed)
-    webhook.execute()
-    db_sess.close()
-    return 'Done'
+        webhook.add_embed(embed)
+        webhook.execute()
+        db_sess.close()
+        return 'Done'
 
 
 @app.route('/report_comment/<comment_id>')
 def report_comment(comment_id):
     db_sess = db_session.create_session()
-    webhook = DiscordWebhook(url="https://discord.com/api/webhooks/1231209734783107164"
-                                 "/t7a_idvkSuHt4Oq7jeQmyHwAiiQ7i9njx2B1_oWUgBolykZqI-hhN6ggBsDxnSkLAN4B")
-    comment = db_sess.query(Comment).filter(Comment.id == comment_id).first()
-    account = db_sess.query(Account).filter(Account.id == comment.author).first()
-    user = db_sess.query(User).filter(User.id == account.id).first()
-    embed = DiscordEmbed(title=f"Type: COMMENT", description=f"ID: {comment_id}", color="79b253")
+    if current_user.banned == 1:
+        db_sess.close()
+        return 'You Banned'
+    else:
+        webhook = DiscordWebhook(url=app.config['DISCORD_WEBHOOK_URL'])
+        comment = db_sess.query(Comment).filter(Comment.id == comment_id).first()
+        account = db_sess.query(Account).filter(Account.id == comment.author).first()
+        user = db_sess.query(User).filter(User.id == account.id).first()
+        embed = DiscordEmbed(title=f"Type: COMMENT", description=f"ID: {comment_id}", color="79b253")
 
-    embed.set_author(
-        name=f"@{user.username}",
-        url=f"https://zhabki.ru/users/@{user.username}",
-    )
+        embed.set_author(
+            name=f"@{user.username}",
+            url=f"https://zhabki.ru/users/@{user.username}",
+        )
 
-    embed.add_embed_field(name="Содержание", value=comment.text, inline=False)
-    if current_user.is_authenticated:
-        embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
+        embed.add_embed_field(name="Содержание", value=comment.text, inline=False)
+        if current_user.is_authenticated:
+            embed.set_footer(text=f"From: @{db_sess.query(User).filter(User.id == current_user.id).first().username}")
 
-    webhook.add_embed(embed)
-    webhook.execute()
-    db_sess.close()
-    return 'Done'
+        webhook.add_embed(embed)
+        webhook.execute()
+        db_sess.close()
+        return 'Done'
 
 
 @app.route('/comments/<post_id>', methods=['GET', 'POST'])
@@ -680,6 +719,9 @@ def comments(post_id):
     post = db_sess.query(Post).filter(Post.id == post_id).first()
     posts_all = db_sess.query(Post).all
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect(f'/comments/{post_id}')
         comment = Comment(
             author=current_user.id,
             text=form.text.data,
@@ -719,6 +761,9 @@ def post(postid):
     form = CommentForm()
     post = db_sess.query(Post).filter(Post.id == int(postid)).first()
     if form.validate_on_submit():
+        if current_user.banned == 1:
+            db_sess.close()
+            return redirect(f'/post/{postid}')
         comment = Comment(
             author=current_user.id,
             text=form.text.data,
@@ -864,6 +909,24 @@ def api_v1_delcomment():
         else:
             db_sess.close()
             return "Comment wasn't found"
+    return "401"
+
+
+@app.route('/api/v1/banuser', methods=['GET'])
+def api_v1_banuser():
+    key = request.args.get('key')
+    userid = request.args.get('userid')
+    if key == app.config['SECRET_KEY']:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == int(userid)).first()
+        if user:
+            user.banned = 1
+            db_sess.commit()
+            db_sess.close()
+            return "Done"
+        else:
+            db_sess.close()
+            return "User wasn't found"
     return "401"
 
 

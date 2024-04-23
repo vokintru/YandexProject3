@@ -45,6 +45,17 @@ async def del_comment(inter: disnake.ApplicationCommandInteraction, commentid: i
         await inter.response.send_message("Ошибка на стороне сервера", ephemeral=True)
 
 
+@bot.slash_command(name="shadow_ban_user", description="Ограничивает функционал пользователю")
+async def del_comment(inter: disnake.ApplicationCommandInteraction, user_id: id):
+    url = f"https://zhabki.ru/api/v1/banuser"
+    response = requests.get(url, params={"userid": user_id, "key": server_api_key})
+    if response.status_code == 200:
+        data = response.text
+        await inter.response.send_message(data, ephemeral=True)
+    else:
+        await inter.response.send_message("Ошибка на стороне сервера", ephemeral=True)
+
+
 @bot.event
 async def on_ready():
     print("Бот готов!")

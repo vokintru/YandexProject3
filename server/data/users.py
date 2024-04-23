@@ -15,11 +15,12 @@ class User(SqlAlchemyBase, UserMixin):
                            primary_key=True, autoincrement=True)
     username = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    banned = sqlalchemy.Column(sqlalchemy.Integer, nullable=True, default=False)
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                       default=datetime.datetime.now)
 
     def __repr__(self):
-        return f'<User> {self.id} {self.username} {self.modified_date}'
+        return f'<User> {self.id} {self.username} {self.modified_date} {self.banned}'
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
