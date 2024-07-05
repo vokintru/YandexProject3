@@ -20,21 +20,25 @@
     <nav class="navbar" style="background-color: #79b253;">
         <a href="/"><img src="/static/img/logo.png" height="56px" width="64px"></a>
         {% if current_user.is_authenticated %}
-            <div class="dropdown">
-                <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    @{{ current_user.username }}
-                </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <a class="dropdown-item" href="/users/@{{ current_user.username }}">Профиль</a>
-                    <a class="dropdown-item" href="/follows">Камыши</a>
-                    <a class="dropdown-item" href="/logout">Уплыть</a>
-                </div>
+        <div class="dropdown">
+            <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownMenuButton"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                @{{ current_user.username }}
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" href="/users/@{{ current_user.username }}">Профиль</a>
+                <a class="dropdown-item" href="/follows">Камыши</a>
+                {% if current_user.admin == 1 %}
+                <a class="dropdown-item"  href="/admin">Админ Панель</a>
+                {% endif %}
+                <a class="dropdown-item" href="/logout">Уплыть</a>
             </div>
+        </div>
         {% else %}
-            <p>
-                <a class="btn btn-primary" href="/register">Новый жаб</a>
-                <a class="btn btn-success" href="/login">Старый жаб</a>
-            </p>
+        <p>
+            <a class="btn btn-primary" href="/register">Новый жаб</a>
+            <a class="btn btn-success" href="/login">Старый жаб</a>
+        </p>
         {% endif %}
     </nav>
 </header>
@@ -154,6 +158,7 @@ function makeRequestNoUpdate(url) {
     xhr.send();
     document.getElementById("notification-report").style.display = "block";
 }
+
 </script>
 
 </body>

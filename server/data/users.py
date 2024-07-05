@@ -18,6 +18,8 @@ class User(SqlAlchemyBase, UserMixin):
     banned = sqlalchemy.Column(sqlalchemy.Integer, nullable=True, default=False)
     modified_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                       default=datetime.datetime.now)
+    admin = sqlalchemy.Column(sqlalchemy.Boolean,
+                              default=False)
 
     def __repr__(self):
         return f'<User> {self.id} {self.username} {self.modified_date} {self.banned}'
@@ -43,4 +45,3 @@ class Account(SqlAlchemyBase, UserMixin):
 
     def __repr__(self):
         return f'<Account> {self.id} {self.name} {self.bio} {self.avatar} {self.followers} {self.follow} {self.badges}'
-

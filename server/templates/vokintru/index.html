@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Админ Панель</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous">
+    <link href="/static/css/vokintru.css" rel="stylesheet"/>
+</head>
+<body>
+<main role="main" class="container">
+<br><br><br>
+<h1 class="ubuntu-mono-bold text-center" style="color:#00e600;">Админ Панель</h1>
+<h2 class="ubuntu-mono-bold text-center" style="color:#00e600;">
+    Сайт предназначен для пользования ограниченного круга лиц.
+</h2>
+<br><br><br>
+{% if current_user.is_authenticated %}
+    {% if current_user.admin == 1 %}
+    <h3 class="ubuntu-mono-bold text-center" style="color:#00e600;">Добро пожаловать <b>{{current_user.username}}!</b></h3>
+    <!-- Здесь код сайта -->
+        <ul>
+            {% block content %}
+            <div class="post border rounded p-3 mb-3 position-relative text-center">
+                 <div class="ubuntu-mono-bold text-center" style="color:#00e600;">
+                    <form action="" method="post">
+                        {{ formurl.hidden_tag() }}
+                        <p class="ubuntu-mono-bold text-center" style="color:#00e600;">
+                            {{ formurl.text.label }} <br>
+                            {{ formurl.text(class="form-control", type="text") }}<br>
+                            {% for error in formurl.text.errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </p>
+                        <p class="ubuntu-mono-bold text-center">{{ formurl.submit(type="submit", class="btn btn-primary") }}</p>
+                        <div class="ubuntu-mono-bold text-center" style="color:#00e600;">{{ messageurl }}</div>
+                    </form>
+                 </div>
+            </div>
+        </ul>
+         <ul>
+                <div class="post border rounded p-3 mb-3 position-relative text-center">
+                    <div class="ubuntu-mono-bold text-center" style="color:#00e600;">
+                        <form id="myForm" action="" method="post" enctype="multipart/form-data">
+                            {{ formimg.hidden_tag() }}
+                                <p class="element-center-inner">
+                                    {{ formimg.file.label }}<br>
+                                    {{ formimg.file(class="form-control-file") }}<br>
+                                    {% for error in formimg.file.errors %}
+                                        <div class="alert alert-danger" role="alert">
+                                            {{ error }}
+                                        </div>
+                                {% endfor %}
+                                <p>{{ formimg.submit(type="submit", class="btn btn-primary") }}</p>
+                            <div>{{ messageimg }}</div>
+                        </form>
+                    </div>
+                </div>
+                {% endblock %}
+            </ul>
+    {% else %}
+    <h3 class="ubuntu-mono-bold text-center" style="color:#00e600;">У вас нету доступа к ресурсу</h3>
+    {% endif %}
+{% else %}
+<h3 class="ubuntu-mono-bold text-center" style="color:#00e600;">Необходима авторизация на <a href="zhabki.ru">zhabki.ru</a> для продолжения!</h3>
+<a class="btn btn-success element-center" href="/login?from=vokintru">Вход</a>
+{% endif %}
+</p>
+</main>
+</body>

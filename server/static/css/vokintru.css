@@ -1,0 +1,30 @@
+.ubuntu-mono-bold {
+    font-family: "Ubuntu Mono", monospace;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.text-center {
+    text-align: center;
+}
+
+body {
+    background-color: #191a19;
+}
+
+.element-center {
+    width: Xu;
+    position: absolute;
+    left: 50%;
+    margin-left: -(X/2)u;
+}
+
+.element-center-inner {
+    width: 25%;
+    margin: auto;
+}
+
+.form-control {
+    background-color: #323232;
+    border: 1px solid #323232;
+}

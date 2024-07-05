@@ -9,9 +9,11 @@ import re
 from data import db_session
 from data.posts import Post
 from data.users import User, Account
+from data.shorturls import SortUrl
 from data.comments import Comment
 from forms.post import NewPostForm, RepostForm, CommentForm, EditPostForm
 from forms.user import RegisterForm, LoginForm, EditForm
+from forms.vokintru import URLCutForm, IMGStock
 import random
 
 app = Flask(__name__)
@@ -453,7 +455,11 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             db_sess.close()
-            return redirect("/")
+            site_from = request.args.get('from')
+            if site_from is not None:
+                return redirect("/" + site_from)
+            else:
+                return redirect("/")
         db_sess.close()
         return render_template('login.html',
                                message="Неправильный логин или пароль",
@@ -932,6 +938,74 @@ def api_v1_banuser():
     return "401"
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+@app.route("/admin", methods=['GET', 'POST'])
+@app.route("/vokintru", methods=['GET', 'POST'])
+def vokintru_index():
+    formurl = URLCutForm()
+    formimg = IMGStock()
+    if formurl.validate_on_submit():
+        db_sess = db_session.create_session()
+        chars = 'abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+        textid = ''
+        for i in range(6):
+            textid += random.choice(chars)
+        su = SortUrl(
+            textid=textid,
+            url=formurl.text.data
+        )
+        db_sess.add(su)
+        db_sess.commit()
+        db_sess.close()
+        return render_template('vokintru/index.html',
+                               messageurl=f"https://zhabki.ru/s/{textid}",
+                               formurl=formurl, formimg=formimg)
+    if formimg.validate_on_submit():
+        db_sess = db_session.create_session()
+        filename = secure_filename(formimg.file.data.filename)
+        chars = 'abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+        textid = ''
+        for i in range(6):
+            textid += random.choice(chars)
+        file_id = textid + "." + filename
+        file_path = os.path.join("static/imgstock", file_id)
+        formimg.file.data.seek(0, 2)
+        file_size = formimg.file.data.tell()
+        formimg.file.data.seek(0)
+        if file_size <= app.config['MAX_FILE_SIZE']:
+            formimg.file.data.save(file_path)
+            post.file_path = file_path
+            post.liked = []
+            post.orig_post = 0
+            post.count_reposts = 0
+            db_sess.commit()
+        su = SortUrl(
+            textid=textid,
+            url=f"https://zhabki.ru/{file_path}"
+        )
+        db_sess.add(su)
+        db_sess.commit()
+        db_sess.close()
+        return render_template('vokintru/index.html',
+                               messageimg=f"https://zhabki.ru/s/{textid}",
+                               formurl=formurl, formimg=formimg)
+    return render_template('vokintru/index.html', formurl=formurl, formimg=formimg)
+
+
+@app.route("/s/<textid>")
+def vokintru_shorturl(textid):
+    db_sess = db_session.create_session()
+    su = db_sess.query(SortUrl).filter(SortUrl.textid == textid).first()
+    if su:
+        db_sess.close()
+        return redirect(su.url)
+    else:
+        db_sess.close()
+        return redirect("/")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 def main():
     db_session.global_init("db/users.db")
     app.run(host='0.0.0.0')
